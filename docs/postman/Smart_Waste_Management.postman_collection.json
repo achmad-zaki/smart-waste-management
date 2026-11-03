@@ -1,0 +1,991 @@
+{
+  "info": {
+    "_postman_id": "5a8d3d19-34af-4e1d-ae5f-06a280c0951b",
+    "name": "Smart Waste Management API",
+    "description": "Dokumentasi & Testing Collection untuk Smart Waste Management System (Laravel REST API).\n\nDilengkapi dengan:\n- Otomatis simpan Bearer Token di Login & Register\n- Environment variable {{base_url}} dan {{token}}\n- Contoh payload lengkap untuk setiap endpoint.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "1. Authentication",
+      "description": "Endpoint registrasi, login, logout, dan cek info user yang sedang aktif.",
+      "item": [
+        {
+          "name": "Register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "if (response && response.data && response.data.token) {",
+                  "    pm.environment.set('token', response.data.token);",
+                  "    console.log('Sanctum token saved from registration.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Budi Santoso\",\n  \"email\": \"budi@example.com\",\n  \"password\": \"password123\",\n  \"password_confirmation\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Mendaftarkan user baru (role default: user)."
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();",
+                  "if (response && response.data && response.data.token) {",
+                  "    pm.environment.set('token', response.data.token);",
+                  "    console.log('Sanctum token saved from login.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"budi@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Login dengan email & password untuk mendapatkan Personal Access Token Sanctum."
+          }
+        },
+        {
+          "name": "Get Current User (Me)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/me",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            },
+            "description": "Mengambil informasi akun pengguna yang sedang login."
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/logout",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "Menghapus token Sanctum yang sedang aktif."
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Profile",
+      "description": "Endpoint manajemen profil pengguna yang sedang login.",
+      "item": [
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/profile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "profile"
+              ]
+            },
+            "description": "Melihat detail profil pengguna."
+          }
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Budi Santoso\",\n  \"phone\": \"081234567890\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/profile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "profile"
+              ]
+            },
+            "description": "Memperbarui nama atau nomor telepon pengguna."
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"current_password\": \"password123\",\n  \"password\": \"newpassword123\",\n  \"password_confirmation\": \"newpassword123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/profile/password",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "profile",
+                "password"
+              ]
+            },
+            "description": "Mengganti password akun dengan memverifikasi password lama."
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Waste Reports",
+      "description": "Endpoint pembuatan, klasifikasi AI, update, dan manajemen laporan sampah.",
+      "item": [
+        {
+          "name": "Classify Waste Image (AI Preview)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "image",
+                  "type": "file",
+                  "description": "File gambar sampah (JPG/PNG/WebP, max 5MB)"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/waste-reports/classify",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "waste-reports",
+                "classify"
+              ]
+            },
+            "description": "Mengirim foto sampah ke backend untuk diprediksi oleh FastAPI ML service tanpa menyimpan laporan ke database."
+          }
+        },
+        {
+          "name": "List Waste Reports",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/waste-reports?page=1&per_page=10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "waste-reports"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Nomor halaman"
+                },
+                {
+                  "key": "per_page",
+                  "value": "10",
+                  "description": "Jumlah data per halaman"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true,
+                  "description": "Pencarian judul laporan"
+                },
+                {
+                  "key": "status",
+                  "value": "pending",
+                  "disabled": true,
+                  "description": "Filter status: pending, in_progress, completed, rejected"
+                },
+                {
+                  "key": "waste_category",
+                  "value": "plastic",
+                  "disabled": true,
+                  "description": "Filter kategori: organic, plastic, paper"
+                },
+                {
+                  "key": "date_from",
+                  "value": "2026-11-01",
+                  "disabled": true,
+                  "description": "Filter tanggal mulai (YYYY-MM-DD)"
+                },
+                {
+                  "key": "date_to",
+                  "value": "2026-11-30",
+                  "disabled": true,
+                  "description": "Filter tanggal akhir (YYYY-MM-DD)"
+                },
+                {
+                  "key": "sort_by",
+                  "value": "created_at",
+                  "disabled": true,
+                  "description": "Kolom sort: created_at, status, dll"
+                },
+                {
+                  "key": "sort_direction",
+                  "value": "desc",
+                  "disabled": true,
+                  "description": "Arah sort: asc atau desc"
+                }
+              ]
+            },
+            "description": "Mengambil daftar laporan sampah (Role User hanya melihat miliknya, Admin melihat semua)."
+          }
+        },
+        {
+          "name": "Create Waste Report",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "title",
+                  "value": "Sampah botol plastik di taman",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "Terdapat tumpukan botol plastik dekat bangku taman.",
+                  "type": "text"
+                },
+                {
+                  "key": "waste_category",
+                  "value": "plastic",
+                  "type": "text",
+                  "description": "organic / plastic / paper"
+                },
+                {
+                  "key": "confidence_score",
+                  "value": "0.94",
+                  "type": "text",
+                  "description": "Skor akurasi AI (opsional)"
+                },
+                {
+                  "key": "latitude",
+                  "value": "-7.2500000",
+                  "type": "text"
+                },
+                {
+                  "key": "longitude",
+                  "value": "112.7500000",
+                  "type": "text"
+                },
+                {
+                  "key": "address",
+                  "value": "Area taman kota, Jl. Pemuda",
+                  "type": "text"
+                },
+                {
+                  "key": "image",
+                  "type": "file",
+                  "description": "Foto sampah yang akan di-upload"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/waste-reports",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "waste-reports"
+              ]
+            },
+            "description": "Membuat laporan sampah baru beserta upload foto."
+          }
+        },
+        {
+          "name": "Get Report Detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/waste-reports/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "waste-reports",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1",
+                  "description": "ID Laporan"
+                }
+              ]
+            },
+            "description": "Melihat detail laporan sampah beserta status history-nya."
+          }
+        },
+        {
+          "name": "Update Report (JSON)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Sampah botol plastik di taman kota (Revisi)\",\n  \"description\": \"Terdapat tumpukan botol dan sedotan plastik dekat bangku taman.\",\n  \"waste_category\": \"plastic\",\n  \"latitude\": -7.25,\n  \"longitude\": 112.75,\n  \"address\": \"Taman Kota Surabaya\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/waste-reports/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "waste-reports",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1",
+                  "description": "ID Laporan"
+                }
+              ]
+            },
+            "description": "Memperbarui data laporan (User hanya bisa mengubah laporan berstatus pending)."
+          }
+        },
+        {
+          "name": "Update Report with Image (Multipart)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "_method",
+                  "value": "PUT",
+                  "type": "text",
+                  "description": "Method spoofing Laravel untuk multipart/form-data"
+                },
+                {
+                  "key": "title",
+                  "value": "Sampah botol plastik di taman kota (Foto Baru)",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "Foto baru setelah diperiksa.",
+                  "type": "text"
+                },
+                {
+                  "key": "waste_category",
+                  "value": "plastic",
+                  "type": "text"
+                },
+                {
+                  "key": "latitude",
+                  "value": "-7.2500000",
+                  "type": "text"
+                },
+                {
+                  "key": "longitude",
+                  "value": "112.7500000",
+                  "type": "text"
+                },
+                {
+                  "key": "address",
+                  "value": "Taman Kota Surabaya",
+                  "type": "text"
+                },
+                {
+                  "key": "image",
+                  "type": "file",
+                  "description": "File gambar pengganti (opsional)"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/waste-reports/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "waste-reports",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1",
+                  "description": "ID Laporan"
+                }
+              ]
+            },
+            "description": "Update data laporan jika menyertakan perubahan foto gambar (menggunakan method spoofing _method=PUT)."
+          }
+        },
+        {
+          "name": "Delete Report",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/waste-reports/:id",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "waste-reports",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1",
+                  "description": "ID Laporan"
+                }
+              ]
+            },
+            "description": "Menghapus laporan sampah (User hanya bisa menghapus laporan miliknya yang berstatus pending)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. User Dashboard",
+      "description": "Endpoint statistik khusus role User.",
+      "item": [
+        {
+          "name": "Get User Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/user/dashboard",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "user",
+                "dashboard"
+              ]
+            },
+            "description": "Statistik ringkasan laporan milik user yang sedang login."
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Admin",
+      "description": "Endpoint khusus role Admin: Dashboard, Update Status Laporan, dan Manajemen User.",
+      "item": [
+        {
+          "name": "Admin Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/dashboard",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "dashboard"
+              ]
+            },
+            "description": "Mengambil agregasi statistik seluruh laporan untuk dashboard admin."
+          }
+        },
+        {
+          "name": "Update Report Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"in_progress\",\n  \"note\": \"Laporan diteruskan ke petugas lapangan untuk penanganan.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/waste-reports/:id/status",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "admin",
+                "waste-reports",
+                ":id",
+                "status"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1",
+                  "description": "ID Laporan"
+                }
+              ]
+            },
+            "description": "Mengubah status laporan (pending, in_progress, completed, rejected) beserta catatan riwayat status."
+          }
+        },
+        {
+          "name": "User Management",
+          "item": [
+            {
+              "name": "List Users",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/admin/users?page=1&per_page=10",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "users"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1",
+                      "description": "Nomor halaman"
+                    },
+                    {
+                      "key": "per_page",
+                      "value": "10",
+                      "description": "Jumlah data per halaman"
+                    },
+                    {
+                      "key": "search",
+                      "value": "",
+                      "disabled": true,
+                      "description": "Cari nama atau email"
+                    }
+                  ]
+                },
+                "description": "Mengambil daftar seluruh user (Admin only)."
+              }
+            },
+            {
+              "name": "Get User Detail",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/admin/users/:id",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "users",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "1",
+                      "description": "ID User"
+                    }
+                  ]
+                },
+                "description": "Mengambil detail user beserta statistik jumlah laporannya."
+              }
+            },
+            {
+              "name": "Create User",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Siti Aminah\",\n  \"email\": \"siti@example.com\",\n  \"password\": \"password123\",\n  \"password_confirmation\": \"password123\",\n  \"role\": \"user\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/admin/users",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "users"
+                  ]
+                },
+                "description": "Admin membuat akun user baru (role: user atau admin)."
+              }
+            },
+            {
+              "name": "Update User",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Siti Aminah\",\n  \"phone\": \"081234567890\",\n  \"role\": \"user\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/admin/users/:id",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "users",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "1",
+                      "description": "ID User"
+                    }
+                  ]
+                },
+                "description": "Admin memperbarui data user."
+              }
+            },
+            {
+              "name": "Delete User",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/admin/users/:id",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "users",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "1",
+                      "description": "ID User"
+                    }
+                  ]
+                },
+                "description": "Admin menghapus akun user."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "6. ML Service (FastAPI Internal)",
+      "description": "Endpoint internal Machine Learning Service (FastAPI).",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{ml_base_url}}/health",
+              "host": [
+                "{{ml_base_url}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": "Cek kesiapan server FastAPI dan model ML."
+          }
+        },
+        {
+          "name": "Predict Image (Direct)",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "image",
+                  "type": "file",
+                  "description": "File gambar sampah langsung ke FastAPI"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{ml_base_url}}/predict",
+              "host": [
+                "{{ml_base_url}}"
+              ],
+              "path": [
+                "predict"
+              ]
+            },
+            "description": "Pengujian langsung endpoint FastAPI model tanpa lewat Laravel."
+          }
+        }
+      ]
+    }
+  ]
+}
