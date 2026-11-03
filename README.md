@@ -58,3 +58,4 @@ php artisan test
 ## 👥 Roles & Permissions
 - **Admin:** Manages reports, updates status, and manages users.
 - **User:** Creates reports, uploads waste photos, uses AI classification preview, and tracks status.
+
