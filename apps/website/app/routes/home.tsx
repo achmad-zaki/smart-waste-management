@@ -1,17 +1,15 @@
-import { Link } from "react-router";
 import {
-  Recycle,
-  ShieldCheck,
-  Camera,
-  MapPin,
-  TrendingUp,
   ArrowRight,
-  Sparkles,
   CheckCircle2,
   Cpu,
   Layers,
+  MapPin,
+  Recycle,
+  ShieldCheck,
+  Sparkles
 } from "lucide-react";
-import { Button } from "~/components/ui/button";
+import { Link } from "react-router";
+import { Button, buttonVariants } from "~/components/ui/button";
 
 export default function Home() {
   return (
@@ -67,12 +65,10 @@ export default function Home() {
 
             {/* Direct Portal Jump Buttons */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-              <Link to="/user/dashboard" className="w-full sm:w-auto">
-                <Button size="lg" className="w-full gap-2 text-base px-8 bg-[#259e73] hover:bg-[#1f8561]">
-                  <Recycle className="h-5 w-5" />
-                  Masuk Portal Warga
-                  <ArrowRight className="h-4 w-4 ml-1" />
-                </Button>
+              <Link to="/user/dashboard" className={buttonVariants({ variant: "warm", size: "lg", className: "w-full sm:w-auto" })}>
+                <Recycle className="h-5 w-5" />
+                Masuk Portal Warga
+                <ArrowRight className="h-4 w-4 ml-1" />
               </Link>
               <Link to="/admin/dashboard" className="w-full sm:w-auto">
                 <Button size="lg" variant="forest" className="w-full gap-2 text-base px-8">
