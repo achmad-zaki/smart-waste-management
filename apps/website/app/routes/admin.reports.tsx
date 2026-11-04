@@ -3,7 +3,6 @@ import {
   Clock,
   Edit,
   ExternalLink,
-  Loader2,
   MapPin,
   Search,
   Sparkles,
@@ -12,6 +11,7 @@ import {
 import React, { useState } from "react";
 import { Link, useSearchParams } from "react-router";
 import { Button } from "~/components/ui/button";
+import { Spinner } from "~/components/ui/spinner";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Modal } from "~/components/ui/modal";
@@ -207,7 +207,7 @@ export default function AdminReportsPage() {
                 <tr>
                   <td colSpan={6} className="text-center py-12 text-[#5d6f66]">
                     <div className="flex flex-col items-center justify-center gap-2">
-                      <Loader2 className="h-6 w-6 animate-spin text-[#259e73]" />
+                      <Spinner className="size-6 text-[#259e73]" />
                       <span>Memuat data laporan...</span>
                     </div>
                   </td>
@@ -396,7 +396,7 @@ export default function AdminReportsPage() {
               >
                 {updateStatusMutation.isPending ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin mr-1.5" />
+                    <Spinner className="mr-1.5" />
                     Menyimpan...
                   </>
                 ) : (

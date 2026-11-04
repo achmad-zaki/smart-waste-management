@@ -1,5 +1,6 @@
 import React from "react";
-import { UploadCloud, Camera, Sparkles, RefreshCw, CheckCircle2 } from "lucide-react";
+import { UploadCloud, Camera, Sparkles, CheckCircle2 } from "lucide-react";
+import { Spinner } from "~/components/ui/spinner";
 import { CategoryBadge } from "~/components/common/category-badge";
 import { formatConfidence } from "~/lib/utils";
 import type { WasteCategory } from "~/types/report.types";
@@ -66,7 +67,7 @@ export function AiDetectionPreview({
             />
             {isClassifying && (
               <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#2e4a21]/70 backdrop-blur-xs text-white">
-                <RefreshCw className="h-8 w-8 animate-spin text-[#acebd4] mb-2" />
+                <Spinner className="size-8 text-[#acebd4] mb-2" />
                 <span className="text-xs font-semibold">AI Sedang Mengklasifikasi...</span>
               </div>
             )}

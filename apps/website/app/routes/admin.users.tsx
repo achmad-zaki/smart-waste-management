@@ -11,10 +11,10 @@ import {
   FileSpreadsheet,
   ExternalLink,
   Trash2,
-  Loader2,
   AlertCircle,
 } from "lucide-react";
 import { Button } from "~/components/ui/button";
+import { Spinner } from "~/components/ui/spinner";
 import { Input } from "~/components/ui/input";
 import { Modal } from "~/components/ui/modal";
 import { Label } from "~/components/ui/label";
@@ -168,7 +168,7 @@ export default function AdminUsersPage() {
                 <tr>
                   <td colSpan={6} className="text-center py-12 text-[#5d6f66]">
                     <div className="flex flex-col items-center justify-center gap-2">
-                      <Loader2 className="h-6 w-6 animate-spin text-[#259e73]" />
+                      <Spinner className="size-6 text-[#259e73]" />
                       <span>Memuat data pengguna...</span>
                     </div>
                   </td>
@@ -353,7 +353,7 @@ export default function AdminUsersPage() {
             <Button type="submit" variant="primary" disabled={createUserMutation.isPending}>
               {createUserMutation.isPending ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-1.5" />
+                  <Spinner className="mr-1.5" />
                   Menyimpan...
                 </>
               ) : (

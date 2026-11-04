@@ -11,7 +11,6 @@ import {
   User,
   Send,
   AlertTriangle,
-  Loader2,
   AlertCircle,
 } from "lucide-react";
 import {
@@ -20,6 +19,7 @@ import {
 } from "~/lib/mock-data";
 import type { ReportStatus } from "~/types/report.types";
 import { Button } from "~/components/ui/button";
+import { Spinner } from "~/components/ui/spinner";
 import { Select } from "~/components/ui/select";
 import { Textarea } from "~/components/ui/textarea";
 import { Label } from "~/components/ui/label";
@@ -60,7 +60,7 @@ export default function AdminReportDetailPage() {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] text-[#5d6f66]">
-        <Loader2 className="h-8 w-8 animate-spin text-[#259e73] mb-3" />
+        <Spinner className="size-8 text-[#259e73] mb-3" />
         <p className="text-sm font-medium">Memuat detail laporan #{id}...</p>
       </div>
     );
@@ -346,7 +346,7 @@ export default function AdminReportDetailPage() {
               >
                 {updateStatusMutation.isPending ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin mr-1.5" />
+                    <Spinner className="mr-1.5" />
                     Menyimpan...
                   </>
                 ) : (

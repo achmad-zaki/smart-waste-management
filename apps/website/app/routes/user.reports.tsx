@@ -7,7 +7,6 @@ import {
   Clock,
   ArrowRight,
   CheckCircle2,
-  Loader2,
   AlertCircle,
 } from "lucide-react";
 import type { Route } from "./+types/user.reports";
@@ -16,6 +15,7 @@ import { CategoryBadge } from "~/components/common/category-badge";
 import { StatusBadge } from "~/components/common/status-badge";
 import { EmptyState } from "~/components/common/empty-state";
 import { Button } from "~/components/ui/button";
+import { Spinner } from "~/components/ui/spinner";
 import { Input } from "~/components/ui/input";
 import { Select } from "~/components/ui/select";
 import { formatDate } from "~/lib/utils";
@@ -133,7 +133,7 @@ export default function UserReportsListPage() {
       {/* Reports List */}
       {isLoading ? (
         <div className="flex flex-col items-center justify-center min-h-[300px] text-[#5d6f66]">
-          <Loader2 className="h-8 w-8 animate-spin text-[#259e73] mb-3" />
+          <Spinner className="size-8 text-[#259e73] mb-3" />
           <p className="text-sm font-medium">Memuat riwayat laporan Anda...</p>
         </div>
       ) : reports.length === 0 ? (

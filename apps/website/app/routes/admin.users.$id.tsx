@@ -6,10 +6,10 @@ import {
   Calendar,
   Shield,
   User,
-  Loader2,
   AlertCircle,
 } from "lucide-react";
 import { Button } from "~/components/ui/button";
+import { Spinner } from "~/components/ui/spinner";
 import type { Route } from "./+types/admin.users.$id";
 import { useAdminUserDetail } from "~/features/users/hooks/use-admin-users";
 import { getApiErrorMessage } from "~/lib/axios";
@@ -33,7 +33,7 @@ export default function AdminUserDetailPage() {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] text-[#5d6f66]">
-        <Loader2 className="h-8 w-8 animate-spin text-[#259e73] mb-3" />
+        <Spinner className="size-8 text-[#259e73] mb-3" />
         <p className="text-sm font-medium">Memuat profil pengguna #{id}...</p>
       </div>
     );

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { User, Mail, Phone, Lock, Save, CheckCircle2, Loader2, AlertCircle } from "lucide-react";
+import { User, Mail, Phone, Lock, Save, CheckCircle2, AlertCircle } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
+import { Spinner } from "~/components/ui/spinner";
 import type { Route } from "./+types/user.profile";
 import {
   useProfile,
@@ -79,7 +80,7 @@ export default function UserProfilePage() {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] text-[#5d6f66]">
-        <Loader2 className="h-8 w-8 animate-spin text-[#259e73] mb-3" />
+        <Spinner className="size-8 text-[#259e73] mb-3" />
         <p className="text-sm font-medium">Memuat profil akun Anda...</p>
       </div>
     );
@@ -174,7 +175,7 @@ export default function UserProfilePage() {
             >
               {updateProfileMutation.isPending ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-1.5" />
+                  <Spinner className="mr-1.5" />
                   Menyimpan...
                 </>
               ) : (
@@ -269,7 +270,7 @@ export default function UserProfilePage() {
             >
               {updatePasswordMutation.isPending ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-1.5" />
+                  <Spinner className="mr-1.5" />
                   Memperbarui Sandi...
                 </>
               ) : (

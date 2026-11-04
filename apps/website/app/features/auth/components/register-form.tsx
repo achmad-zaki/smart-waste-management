@@ -2,8 +2,9 @@ import React from "react";
 import { Link } from "react-router";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowRight, AlertCircle, Loader2 } from "lucide-react";
+import { ArrowRight, AlertCircle } from "lucide-react";
 import { Button } from "~/components/ui/button";
+import { Spinner } from "~/components/ui/spinner";
 import { Input } from "~/components/ui/input";
 import { Field, FieldLabel, FieldError } from "~/components/ui/field";
 import { registerSchema, type RegisterFormValues } from "../schemas/auth.schema";
@@ -198,7 +199,7 @@ export function RegisterForm({ onSuccess }: RegisterFormProps) {
         >
           {registerMutation.isPending ? (
             <>
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              <Spinner className="mr-2" />
               Mendaftarkan Akun...
             </>
           ) : (

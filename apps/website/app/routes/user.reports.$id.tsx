@@ -7,7 +7,6 @@ import {
   Sparkles,
   Calendar,
   Trash2,
-  Loader2,
   AlertCircle,
 } from "lucide-react";
 import {
@@ -15,6 +14,7 @@ import {
   statusLabels,
 } from "~/lib/mock-data";
 import { Button } from "~/components/ui/button";
+import { Spinner } from "~/components/ui/spinner";
 import type { Route } from "./+types/user.reports.$id";
 import { useDeleteReport, useReportDetail } from "~/features/reports/hooks/use-reports";
 import { getApiErrorMessage } from "~/lib/axios";
@@ -40,7 +40,7 @@ export default function UserReportDetailPage() {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] text-[#5d6f66]">
-        <Loader2 className="h-8 w-8 animate-spin text-[#259e73] mb-3" />
+        <Spinner className="size-8 text-[#259e73] mb-3" />
         <p className="text-sm font-medium">Memuat rincian laporan #{id}...</p>
       </div>
     );
