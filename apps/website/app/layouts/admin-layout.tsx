@@ -13,6 +13,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { cn } from "~/lib/utils";
+import { useCurrentUser, useLogout } from "~/features/auth/hooks/use-auth";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -21,6 +22,13 @@ interface AdminLayoutProps {
 export function AdminLayout({ children }: AdminLayoutProps) {
   const location = useLocation();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const { data: user } = useCurrentUser();
+  const logoutMutation = useLogout();
+
+  const userInitial = user?.name
+    ? user.name.split(" ").map((w) => w[0]).join("").substring(0, 2).toUpperCase()
+    : "AD";
+  const displayName = user?.name || "Admin Dinas";
 
   const navigation = [
     {
@@ -140,22 +148,25 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           <div className="flex items-center justify-between pt-2">
             <div className="flex items-center gap-2.5">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#259e73] text-white text-xs font-bold">
-                DLH
+                {userInitial}
               </div>
               <div className="text-left">
                 <p className="text-xs font-medium text-white truncate max-w-[120px]">
-                  Dinas Lingkungan
+                  {displayName}
                 </p>
-                <p className="text-[10px] text-[#acebd4]">Super Admin</p>
+                <p className="text-[10px] text-[#acebd4]">
+                  {user?.role === "admin" ? "Super Admin" : "Petugas"}
+                </p>
               </div>
             </div>
-            <Link
-              to="/login"
+            <button
+              onClick={() => logoutMutation.mutate()}
               title="Keluar"
-              className="rounded-lg p-2 text-white/70 hover:bg-white/10 hover:text-white transition-colors"
+              disabled={logoutMutation.isPending}
+              className="rounded-lg p-2 text-white/70 hover:bg-white/10 hover:text-white transition-colors cursor-pointer"
             >
               <LogOut className="h-4 w-4" />
-            </Link>
+            </button>
           </div>
         </div>
       </aside>
@@ -190,10 +201,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             </Link>
             <div className="flex items-center gap-2.5 pl-2 border-l border-[#e2ebe6]">
               <div className="h-8 w-8 rounded-full bg-[#2e4a21] flex items-center justify-center text-white text-xs font-semibold">
-                AD
+                {userInitial}
               </div>
               <span className="text-xs font-medium text-[#2e4a21] hidden md:inline">
-                Admin DLH
+                {displayName}
               </span>
             </div>
           </div>

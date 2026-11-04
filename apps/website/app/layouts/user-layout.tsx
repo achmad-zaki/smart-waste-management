@@ -13,6 +13,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { cn } from "~/lib/utils";
+import { useCurrentUser, useLogout } from "~/features/auth/hooks/use-auth";
 
 interface UserLayoutProps {
   children: React.ReactNode;
@@ -21,6 +22,13 @@ interface UserLayoutProps {
 export function UserLayout({ children }: UserLayoutProps) {
   const location = useLocation();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const { data: user } = useCurrentUser();
+  const logoutMutation = useLogout();
+
+  const userInitial = user?.name
+    ? user.name.split(" ").map((w) => w[0]).join("").substring(0, 2).toUpperCase()
+    : "WR";
+  const displayName = user?.name || "Warga";
 
   const navigation = [
     {
@@ -157,22 +165,25 @@ export function UserLayout({ children }: UserLayoutProps) {
           <div className="flex items-center justify-between pt-2">
             <div className="flex items-center gap-2.5">
               <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#acebd4] text-[#2e4a21] text-xs font-bold border border-[#259e73]/20">
-                AQ
+                {userInitial}
               </div>
               <div className="text-left">
                 <p className="text-xs font-semibold text-[#2e4a21] truncate max-w-[120px]">
-                  Ahmad Qomaruddin
+                  {displayName}
                 </p>
-                <p className="text-[10px] text-[#5d6f66]">Warga Terverifikasi</p>
+                <p className="text-[10px] text-[#5d6f66]">
+                  {user?.role === "admin" ? "Administrator" : "Warga Terverifikasi"}
+                </p>
               </div>
             </div>
-            <Link
-              to="/login"
+            <button
+              onClick={() => logoutMutation.mutate()}
               title="Keluar"
-              className="rounded-lg p-2 text-[#5d6f66] hover:bg-red-50 hover:text-red-600 transition-colors"
+              disabled={logoutMutation.isPending}
+              className="rounded-lg p-2 text-[#5d6f66] hover:bg-red-50 hover:text-red-600 transition-colors cursor-pointer"
             >
               <LogOut className="h-4 w-4" />
-            </Link>
+            </button>
           </div>
         </div>
       </aside>
@@ -191,7 +202,7 @@ export function UserLayout({ children }: UserLayoutProps) {
             <div>
               <p className="text-xs text-[#5d6f66]">Selamat Datang,</p>
               <h2 className="text-sm font-semibold text-[#2e4a21]">
-                Ahmad Qomaruddin
+                {displayName}
               </h2>
             </div>
           </div>

@@ -1,15 +1,33 @@
-import React, { useState } from "react";
-import { User, Mail, Phone, Lock, Save, CheckCircle2, ShieldCheck } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { User, Mail, Phone, Lock, Save, CheckCircle2, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
+import type { Route } from "./+types/user.profile";
+import {
+  useProfile,
+  useUpdatePassword,
+  useUpdateProfile,
+} from "~/features/users/hooks/use-profile";
+import { getApiErrorMessage } from "~/lib/axios";
+
+export function meta({}: Route.MetaArgs) {
+  return [
+    { title: "Profil Pengguna - Smart Waste Management" },
+    {
+      name: "description",
+      content: "Kelola informasi profil warga dan pengaturan kata sandi akun pelapor sampah.",
+    },
+  ];
+}
 
 export default function UserProfilePage() {
-  const [profile, setProfile] = useState({
-    name: "Ahmad Qomaruddin",
-    email: "ahmad@warga.id",
-    phone: "0857-1122-3344",
-  });
+  const { data: userProfile, isLoading, isError, error } = useProfile();
+  const updateProfileMutation = useUpdateProfile();
+  const updatePasswordMutation = useUpdatePassword();
+
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
 
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
@@ -20,18 +38,52 @@ export default function UserProfilePage() {
   const [profileSuccess, setProfileSuccess] = useState(false);
   const [passwordSuccess, setPasswordSuccess] = useState(false);
 
+  useEffect(() => {
+    if (userProfile) {
+      setName(userProfile.name || "");
+      setPhone(userProfile.phone || "");
+    }
+  }, [userProfile]);
+
   const handleUpdateProfile = (e: React.FormEvent) => {
     e.preventDefault();
-    setProfileSuccess(true);
-    setTimeout(() => setProfileSuccess(false), 3000);
+    updateProfileMutation.mutate(
+      { name, phone },
+      {
+        onSuccess: () => {
+          setProfileSuccess(true);
+          setTimeout(() => setProfileSuccess(false), 4000);
+        },
+      }
+    );
   };
 
   const handleUpdatePassword = (e: React.FormEvent) => {
     e.preventDefault();
-    setPasswordSuccess(true);
-    setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
-    setTimeout(() => setPasswordSuccess(false), 3000);
+    updatePasswordMutation.mutate(
+      {
+        current_password: passwordData.currentPassword,
+        password: passwordData.newPassword,
+        password_confirmation: passwordData.confirmPassword,
+      },
+      {
+        onSuccess: () => {
+          setPasswordSuccess(true);
+          setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
+          setTimeout(() => setPasswordSuccess(false), 4000);
+        },
+      }
+    );
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-[#5d6f66]">
+        <Loader2 className="h-8 w-8 animate-spin text-[#259e73] mb-3" />
+        <p className="text-sm font-medium">Memuat profil akun Anda...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
@@ -43,6 +95,13 @@ export default function UserProfilePage() {
           Perbarui informasi kontak dan keamanan akun pelapor Anda.
         </p>
       </div>
+
+      {isError && (
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 flex items-center gap-2.5 text-sm text-red-700">
+          <AlertCircle className="h-5 w-5 shrink-0 text-red-500" />
+          <span>Gagal memuat profil: {getApiErrorMessage(error)}</span>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Personal Details Card */}
@@ -60,52 +119,70 @@ export default function UserProfilePage() {
           {profileSuccess && (
             <div className="mb-4 rounded-lg bg-[#259e73]/15 border border-[#259e73]/30 p-3 text-xs text-[#2e4a21] flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-[#259e73]" />
-              Data profil berhasil diperbarui!
+              Informasi kontak Anda berhasil disimpan!
+            </div>
+          )}
+
+          {updateProfileMutation.error && (
+            <div className="mb-4 rounded-lg bg-red-50 border border-red-200 p-3 text-xs text-red-700">
+              {getApiErrorMessage(updateProfileMutation.error)}
             </div>
           )}
 
           <form onSubmit={handleUpdateProfile} className="space-y-4">
             <div>
-              <Label htmlFor="userName" required>Nama Lengkap</Label>
+              <Label htmlFor="citizenName" required>Nama Lengkap</Label>
               <div className="mt-1.5">
                 <Input
-                  id="userName"
-                  value={profile.name}
-                  onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                  id="citizenName"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                   required
                 />
               </div>
             </div>
 
             <div>
-              <Label htmlFor="userEmail">Alamat Email (Permanen)</Label>
+              <Label htmlFor="citizenEmail">Alamat Email (Permanen)</Label>
               <div className="mt-1.5">
                 <Input
-                  id="userEmail"
-                  value={profile.email}
+                  id="citizenEmail"
+                  value={userProfile?.email || ""}
                   disabled
-                  className="bg-[#f5f8f6] cursor-not-allowed"
+                  className="bg-[#f5f8f6] cursor-not-allowed text-[#889990]"
                 />
               </div>
-              <p className="mt-1 text-[11px] text-[#5d6f66]">
-                Email digunakan sebagai identitas akun utama dan tidak dapat diganti.
-              </p>
             </div>
 
             <div>
-              <Label htmlFor="userPhone">Nomor WhatsApp / Kontak Aktif</Label>
+              <Label htmlFor="citizenPhone">Nomor WhatsApp / Seluler</Label>
               <div className="mt-1.5">
                 <Input
-                  id="userPhone"
-                  value={profile.phone}
-                  onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+                  id="citizenPhone"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="0812-3456-7890"
                 />
               </div>
             </div>
 
-            <Button type="submit" variant="primary" className="w-full">
-              <Save className="h-4 w-4 mr-1.5" />
-              Simpan Profil
+            <Button
+              type="submit"
+              variant="primary"
+              className="w-full"
+              disabled={updateProfileMutation.isPending}
+            >
+              {updateProfileMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-1.5" />
+                  Menyimpan...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-1.5" />
+                  Simpan Kontak Profil
+                </>
+              )}
             </Button>
           </form>
         </div>
@@ -118,23 +195,29 @@ export default function UserProfilePage() {
             </div>
             <div>
               <h3 className="text-sm font-semibold text-[#2e4a21]">Ganti Kata Sandi</h3>
-              <p className="text-xs text-[#5d6f66]">Amankan akun Anda dengan sandi yang kuat</p>
+              <p className="text-xs text-[#5d6f66]">Jaga keamanan akun pelaporan Anda</p>
             </div>
           </div>
 
           {passwordSuccess && (
             <div className="mb-4 rounded-lg bg-[#259e73]/15 border border-[#259e73]/30 p-3 text-xs text-[#2e4a21] flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-[#259e73]" />
-              Kata sandi berhasil diperbarui!
+              Kata sandi Anda berhasil diperbarui!
+            </div>
+          )}
+
+          {updatePasswordMutation.error && (
+            <div className="mb-4 rounded-lg bg-red-50 border border-red-200 p-3 text-xs text-red-700">
+              {getApiErrorMessage(updatePasswordMutation.error)}
             </div>
           )}
 
           <form onSubmit={handleUpdatePassword} className="space-y-4">
             <div>
-              <Label htmlFor="uCurrPass" required>Kata Sandi Saat Ini</Label>
+              <Label htmlFor="curPass" required>Kata Sandi Saat Ini</Label>
               <div className="mt-1.5">
                 <Input
-                  id="uCurrPass"
+                  id="curPass"
                   type="password"
                   placeholder="••••••••"
                   value={passwordData.currentPassword}
@@ -147,10 +230,10 @@ export default function UserProfilePage() {
             </div>
 
             <div>
-              <Label htmlFor="uNewPass" required>Kata Sandi Baru</Label>
+              <Label htmlFor="userNewPass" required>Kata Sandi Baru</Label>
               <div className="mt-1.5">
                 <Input
-                  id="uNewPass"
+                  id="userNewPass"
                   type="password"
                   placeholder="Minimal 8 karakter"
                   value={passwordData.newPassword}
@@ -163,10 +246,10 @@ export default function UserProfilePage() {
             </div>
 
             <div>
-              <Label htmlFor="uConfPass" required>Konfirmasi Kata Sandi Baru</Label>
+              <Label htmlFor="userConfPass" required>Ulangi Kata Sandi Baru</Label>
               <div className="mt-1.5">
                 <Input
-                  id="uConfPass"
+                  id="userConfPass"
                   type="password"
                   placeholder="••••••••"
                   value={passwordData.confirmPassword}
@@ -178,9 +261,23 @@ export default function UserProfilePage() {
               </div>
             </div>
 
-            <Button type="submit" variant="forest" className="w-full">
-              <Lock className="h-4 w-4 mr-1.5" />
-              Perbarui Kata Sandi
+            <Button
+              type="submit"
+              variant="forest"
+              className="w-full"
+              disabled={updatePasswordMutation.isPending}
+            >
+              {updatePasswordMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-1.5" />
+                  Memperbarui Sandi...
+                </>
+              ) : (
+                <>
+                  <Lock className="h-4 w-4 mr-1.5" />
+                  Perbarui Kata Sandi
+                </>
+              )}
             </Button>
           </form>
         </div>
@@ -188,4 +285,3 @@ export default function UserProfilePage() {
     </div>
   );
 }
-

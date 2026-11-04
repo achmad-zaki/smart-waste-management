@@ -10,10 +10,22 @@ import {
 } from "lucide-react";
 import { Link } from "react-router";
 import { Button, buttonVariants } from "~/components/ui/button";
+import type { Route } from "./+types/home";
+
+export function meta({ }: Route.MetaArgs) {
+  return [
+    { title: "Smart Waste Management - Sistem Pelaporan & Klasifikasi Sampah AI" },
+    {
+      name: "description",
+      content:
+        "Sistem terpadu antara warga dan dinas kebersihan untuk pelaporan sampah liar dan klasifikasi otomatis berbasis AI.",
+    },
+  ];
+}
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-[#fcfcfc] text-[#2e4a21]">
+    <div className="min-h-screen">
       {/* Navigation Header */}
       <header className="border-b border-[#e2ebe6] bg-[#fcfcfc]/90 backdrop-blur-md sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
@@ -32,15 +44,8 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-3">
-            <Link to="/login">
-              <Button variant="ghost" size="sm">
-                Masuk
-              </Button>
-            </Link>
-            <Link to="/register">
-              <Button variant="primary" size="sm">
-                Daftar Warga
-              </Button>
+            <Link to="/login" className={buttonVariants({ variant: "primary" })}>
+              Masuk
             </Link>
           </div>
         </div>

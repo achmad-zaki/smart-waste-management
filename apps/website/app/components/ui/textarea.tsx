@@ -1,29 +1,17 @@
-import React from "react";
-import { cn } from "~/lib/utils";
+import * as React from "react"
+import { cn } from "cn"
 
-export interface TextareaProps
-  extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
-  error?: string;
+function Textarea({ className, ...props }: React.ComponentProps<"textarea">) {
+  return (
+    <textarea
+      data-slot="textarea"
+      className={cn(
+        "flex field-sizing-content min-h-16 w-full resize-none rounded-xl border border-input bg-input/30 px-3 py-3 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-[3px] aria-invalid:ring-destructive/20 md:text-sm dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40",
+        className
+      )}
+      {...props}
+    />
+  )
 }
 
-export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
-  ({ className, error, ...props }, ref) => {
-    return (
-      <div className="w-full">
-        <textarea
-          ref={ref}
-          className={cn(
-            "flex min-h-[90px] w-full rounded-lg border border-[#e2ebe6] bg-[#fcfcfc] px-3.5 py-2.5 text-sm text-[#2e4a21] placeholder:text-[#889990] transition-colors hover:border-[#c2d8cd] focus-visible:outline-none focus-visible:border-[#259e73] focus-visible:ring-2 focus-visible:ring-[#259e73]/20 disabled:cursor-not-allowed disabled:opacity-50",
-            error && "border-red-500 focus-visible:border-red-500 focus-visible:ring-red-500/20",
-            className
-          )}
-          {...props}
-        />
-        {error && <p className="mt-1.5 text-xs text-red-600 font-medium">{error}</p>}
-      </div>
-    );
-  }
-);
-
-Textarea.displayName = "Textarea";
-
+export { Textarea }
