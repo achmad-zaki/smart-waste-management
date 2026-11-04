@@ -1,0 +1,298 @@
+import React, { useState, useMemo } from "react";
+import { Link } from "react-router";
+import {
+  Search,
+  UserPlus,
+  Shield,
+  User,
+  Phone,
+  Mail,
+  Calendar,
+  FileSpreadsheet,
+  ExternalLink,
+  Edit,
+  Trash2,
+} from "lucide-react";
+import { initialUsers, type UserAccount } from "~/lib/mock-data";
+import { Button } from "~/components/ui/button";
+import { Input } from "~/components/ui/input";
+import { Modal } from "~/components/ui/modal";
+import { Label } from "~/components/ui/label";
+import { Select } from "~/components/ui/select";
+
+export default function AdminUsersPage() {
+  const [users, setUsers] = useState<UserAccount[]>(initialUsers);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [roleFilter, setRoleFilter] = useState("all");
+
+  // Modal State
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newUserData, setNewUserData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    role: "user" as "admin" | "user",
+    password: "",
+  });
+
+  const filteredUsers = useMemo(() => {
+    return users.filter((u) => {
+      const matchSearch =
+        u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        u.email.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchRole = roleFilter === "all" || u.role === roleFilter;
+      return matchSearch && matchRole;
+    });
+  }, [users, searchTerm, roleFilter]);
+
+  const handleCreateUser = (e: React.FormEvent) => {
+    e.preventDefault();
+    const newUser: UserAccount = {
+      id: Date.now(),
+      name: newUserData.name,
+      email: newUserData.email,
+      phone: newUserData.phone || "-",
+      role: newUserData.role,
+      reports_count: 0,
+      created_at: new Date().toISOString().replace("T", " ").substring(0, 16),
+    };
+    setUsers([newUser, ...users]);
+    setIsModalOpen(false);
+    setNewUserData({ name: "", email: "", phone: "", role: "user", password: "" });
+  };
+
+  const handleDeleteUser = (id: number) => {
+    if (confirm("Apakah Anda yakin ingin menghapus akun ini?")) {
+      setUsers(users.filter((u) => u.id !== id));
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-[#2e4a21]">
+            Kelola Pengguna Sistem
+          </h1>
+          <p className="text-sm text-[#5d6f66] mt-0.5">
+            Manajemen akun administrator dinas dan seluruh warga pelapor.
+          </p>
+        </div>
+
+        <Button
+          variant="primary"
+          onClick={() => setIsModalOpen(true)}
+          className="gap-2"
+        >
+          <UserPlus className="h-4 w-4" />
+          Tambah Pengguna Baru
+        </Button>
+      </div>
+
+      {/* Search and Filters */}
+      <div className="rounded-xl border border-[#e2ebe6] bg-[#fcfcfc] p-4 shadow-xs">
+        <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+          <div className="sm:col-span-8 relative">
+            <Search className="pointer-events-none absolute left-3.5 top-3 h-4 w-4 text-[#5d6f66]" />
+            <Input
+              type="text"
+              placeholder="Cari nama atau email pengguna..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+
+          <div className="sm:col-span-4">
+            <Select
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value)}
+            >
+              <option value="all">Semua Peran (Admin & Warga)</option>
+              <option value="admin">Administrator Saja</option>
+              <option value="user">Warga / Pelapor Saja</option>
+            </Select>
+          </div>
+        </div>
+      </div>
+
+      {/* Users Table */}
+      <div className="rounded-xl border border-[#e2ebe6] bg-[#fcfcfc] overflow-hidden shadow-xs">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-[#f5f8f6] text-[#5d6f66] border-b border-[#e2ebe6]">
+              <tr>
+                <th className="px-5 py-3.5 font-semibold">Pengguna</th>
+                <th className="px-5 py-3.5 font-semibold">Kontak</th>
+                <th className="px-5 py-3.5 font-semibold">Hak Akses (Role)</th>
+                <th className="px-5 py-3.5 font-semibold">Jumlah Laporan</th>
+                <th className="px-5 py-3.5 font-semibold">Tanggal Daftar</th>
+                <th className="px-5 py-3.5 font-semibold text-right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#f0f4f2]">
+              {filteredUsers.map((user) => (
+                <tr key={user.id} className="hover:bg-[#f5f8f6]/60 transition-colors">
+                  <td className="px-5 py-4 whitespace-nowrap">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#acebd4] text-[#2e4a21] font-bold text-xs">
+                        {user.name.substring(0, 2).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-[#2e4a21]">{user.name}</p>
+                        <p className="text-[11px] text-[#5d6f66] flex items-center gap-1">
+                          <Mail className="h-3 w-3 text-[#5d6f66]" />
+                          {user.email}
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-5 py-4 whitespace-nowrap text-[#5d6f66]">
+                    <span className="flex items-center gap-1.5">
+                      <Phone className="h-3 w-3 text-[#259e73]" />
+                      {user.phone}
+                    </span>
+                  </td>
+                  <td className="px-5 py-4 whitespace-nowrap">
+                    {user.role === "admin" ? (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#2e4a21] text-white">
+                        <Shield className="h-3 w-3" />
+                        Admin
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#acebd4]/40 text-[#2e4a21] border border-[#acebd4]">
+                        <User className="h-3 w-3 text-[#259e73]" />
+                        Warga
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-5 py-4 whitespace-nowrap font-medium text-[#2e4a21]">
+                    <span className="flex items-center gap-1">
+                      <FileSpreadsheet className="h-3.5 w-3.5 text-[#259e73]" />
+                      {user.reports_count} Laporan
+                    </span>
+                  </td>
+                  <td className="px-5 py-4 whitespace-nowrap text-[#5d6f66]">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="h-3 w-3 text-[#5d6f66]" />
+                      {user.created_at}
+                    </span>
+                  </td>
+                  <td className="px-5 py-4 whitespace-nowrap text-right">
+                    <div className="flex items-center justify-end gap-1.5">
+                      <Link to={`/admin/users/${user.id}`}>
+                        <Button variant="ghost" size="sm" className="h-8 px-2.5 text-xs text-[#259e73] hover:bg-[#acebd4]/20">
+                          Detail
+                          <ExternalLink className="h-3.5 w-3.5 ml-1" />
+                        </Button>
+                      </Link>
+                      {user.role !== "admin" && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDeleteUser(user.id)}
+                          className="h-8 w-8 text-red-600 hover:bg-red-50 hover:text-red-700"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Add User Modal */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="Tambah Pengguna Baru"
+        description="Buat akun admin atau akun warga baru ke dalam database sistem."
+      >
+        <form onSubmit={handleCreateUser} className="space-y-4">
+          <div>
+            <Label htmlFor="addName" required>Nama Lengkap</Label>
+            <div className="mt-1.5">
+              <Input
+                id="addName"
+                placeholder="Contoh: Rina Kusuma"
+                value={newUserData.name}
+                onChange={(e) => setNewUserData({ ...newUserData, name: e.target.value })}
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="addEmail" required>Alamat Email</Label>
+            <div className="mt-1.5">
+              <Input
+                id="addEmail"
+                type="email"
+                placeholder="rina@gmail.com"
+                value={newUserData.email}
+                onChange={(e) => setNewUserData({ ...newUserData, email: e.target.value })}
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="addPhone">Nomor Telepon</Label>
+            <div className="mt-1.5">
+              <Input
+                id="addPhone"
+                type="tel"
+                placeholder="0812-3344-5566"
+                value={newUserData.phone}
+                onChange={(e) => setNewUserData({ ...newUserData, phone: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="addRole" required>Hak Akses (Role)</Label>
+            <div className="mt-1.5">
+              <Select
+                id="addRole"
+                value={newUserData.role}
+                onChange={(e) => setNewUserData({ ...newUserData, role: e.target.value as "admin" | "user" })}
+              >
+                <option value="user">Warga / Pelapor Biasa</option>
+                <option value="admin">Administrator Dinas (DLH)</option>
+              </Select>
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="addPassword" required>Kata Sandi Sementara</Label>
+            <div className="mt-1.5">
+              <Input
+                id="addPassword"
+                type="password"
+                placeholder="Minimal 8 karakter"
+                value={newUserData.password}
+                onChange={(e) => setNewUserData({ ...newUserData, password: e.target.value })}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#f0f4f2]">
+            <Button type="button" variant="ghost" onClick={() => setIsModalOpen(false)}>
+              Batal
+            </Button>
+            <Button type="submit" variant="primary">
+              Simpan Pengguna
+            </Button>
+          </div>
+        </form>
+      </Modal>
+    </div>
+  );
+}
+

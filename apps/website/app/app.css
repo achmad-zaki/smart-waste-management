@@ -1,0 +1,73 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  /* User Specified Palette */
+  --color-brand-primary: #259e73;
+  --color-brand-primary-hover: #1f8561;
+  --color-brand-mint: #acebd4;
+  --color-brand-mint-light: #e8f9f2;
+  --color-brand-warm: #f2bf87;
+  --color-brand-warm-light: #fdf5ec;
+  --color-brand-forest: #2e4a21;
+  --color-brand-forest-dark: #223719;
+  --color-brand-surface: #fcfcfc;
+  --color-brand-surface-subtle: #f5f8f6;
+  --color-brand-border: #e2ebe6;
+  --color-brand-border-strong: #c2d8cd;
+  --color-brand-muted: #5d6f66;
+  --color-brand-danger: #d9433e;
+  --color-brand-danger-light: #feecec;
+}
+
+:root {
+  color-scheme: light;
+  --brand-primary: #259e73;
+  --brand-mint: #acebd4;
+  --brand-warm: #f2bf87;
+  --brand-forest: #2e4a21;
+  --brand-surface: #fcfcfc;
+}
+
+html,
+body {
+  background-color: var(--color-brand-surface);
+  color: var(--color-brand-forest);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom browser surfaces: selection, focus, scrollbar */
+::selection {
+  background-color: #acebd4;
+  color: #2e4a21;
+}
+
+:focus-visible {
+  outline: 2px solid #259e73;
+  outline-offset: 2px;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f5f8f6;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c2d8cd;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #259e73;
+}
