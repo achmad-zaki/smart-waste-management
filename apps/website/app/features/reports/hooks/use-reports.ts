@@ -3,6 +3,7 @@ import { reportService } from "~/services/report-service";
 import type {
   ReportFilterParams,
   ReportStatus,
+  UpdateReportData,
 } from "~/types/report.types";
 import { dashboardKeys } from "~/features/dashboard/hooks/use-dashboard";
 
@@ -54,6 +55,28 @@ export function useCreateReport() {
     mutationFn: (formData: FormData) => reportService.createReport(formData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: reportKeys.all });
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
+    },
+  });
+}
+
+/**
+ * Hook to update an existing waste report's details.
+ */
+export function useUpdateReport() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: number;
+      data: UpdateReportData | FormData;
+    }) => reportService.updateReport(id, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: reportKeys.detail(variables.id) });
+      queryClient.invalidateQueries({ queryKey: reportKeys.lists() });
       queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
     },
   });

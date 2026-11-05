@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link, useParams } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
 import {
   ArrowLeft,
   MapPin,
@@ -12,20 +12,27 @@ import {
   Send,
   AlertTriangle,
   AlertCircle,
+  Edit,
+  Trash2,
+  FileSpreadsheet,
 } from "lucide-react";
 import {
   categoryLabels,
   statusLabels,
 } from "~/constants/report.constants";
-import type { ReportStatus } from "~/types/report.types";
+import type { ReportStatus, WasteCategory } from "~/types/report.types";
 import { Button } from "~/components/ui/button";
 import { Spinner } from "~/components/ui/spinner";
 import { Select } from "~/components/ui/select";
 import { Textarea } from "~/components/ui/textarea";
+import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
+import { Modal } from "~/components/ui/modal";
 import type { Route } from "./+types/admin.reports.$id";
 import {
+  useDeleteReport,
   useReportDetail,
+  useUpdateReport,
   useUpdateReportStatus,
 } from "~/features/reports/hooks/use-reports";
 import { getApiErrorMessage } from "~/lib/axios";
@@ -42,20 +49,34 @@ export function meta({ params }: Route.MetaArgs) {
 
 export default function AdminReportDetailPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const reportId = Number(id) || 0;
 
   const { data: report, isLoading, isError, error, refetch } = useReportDetail(reportId);
   const updateStatusMutation = useUpdateReportStatus();
+  const updateReportMutation = useUpdateReport();
+  const deleteMutation = useDeleteReport();
 
   const [selectedStatus, setSelectedStatus] = useState<ReportStatus>("pending");
   const [statusNote, setStatusNote] = useState("");
-  const [notification, setNotification] = useState<string | null>(null);
+  const [notification, setNotification] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  // Edit Report Info Modal State
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editCategory, setEditCategory] = useState<WasteCategory>("plastic");
+  const [editAddress, setEditAddress] = useState("");
 
   useEffect(() => {
-    if (report?.status) {
+    if (report) {
       setSelectedStatus(report.status);
+      setEditTitle(report.title || "");
+      setEditDescription(report.description || "");
+      setEditCategory(report.waste_category || "plastic");
+      setEditAddress(report.address || "");
     }
-  }, [report?.status]);
+  }, [report]);
 
   if (isLoading) {
     return (
@@ -113,11 +134,70 @@ export default function AdminReportDetailPage() {
       {
         onSuccess: () => {
           setStatusNote("");
-          setNotification("Status laporan dan catatan audit berhasil diperbarui!");
+          setNotification({
+            type: "success",
+            text: "Status laporan dan riwayat audit berhasil diperbarui!",
+          });
           setTimeout(() => setNotification(null), 4000);
+        },
+        onError: (err) => {
+          setNotification({
+            type: "error",
+            text: `Gagal memperbarui status: ${getApiErrorMessage(err)}`,
+          });
         },
       }
     );
+  };
+
+  const handleEditReportSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    updateReportMutation.mutate(
+      {
+        id: report.id,
+        data: {
+          title: editTitle,
+          description: editDescription,
+          waste_category: editCategory,
+          address: editAddress,
+          latitude: report.latitude,
+          longitude: report.longitude,
+        },
+      },
+      {
+        onSuccess: () => {
+          setIsEditModalOpen(false);
+          setNotification({
+            type: "success",
+            text: "Informasi laporan berhasil diperbarui!",
+          });
+          setTimeout(() => setNotification(null), 4000);
+        },
+        onError: (err) => {
+          setNotification({
+            type: "error",
+            text: `Gagal memperbarui informasi laporan: ${getApiErrorMessage(err)}`,
+          });
+        },
+      }
+    );
+  };
+
+  const handleDeleteReport = () => {
+    if (confirm(`Apakah Anda yakin ingin menghapus laporan #${report.id}? Tindakan ini tidak dapat dibatalkan.`)) {
+      deleteMutation.mutate(report.id, {
+        onSuccess: () => {
+          navigate("/admin/reports");
+        },
+        onError: (err) => {
+          setNotification({
+            type: "error",
+            text: `Gagal menghapus laporan: ${getApiErrorMessage(err)}`,
+          });
+        },
+      });
+    }
   };
 
   const statusHistories = report.status_histories || [];
@@ -134,7 +214,28 @@ export default function AdminReportDetailPage() {
           <span>Kembali ke Semua Laporan</span>
         </Link>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsEditModalOpen(true)}
+            className="text-xs font-semibold gap-1.5"
+          >
+            <Edit className="h-3.5 w-3.5" />
+            <span>Edit Informasi</span>
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleDeleteReport}
+            disabled={deleteMutation.isPending}
+            className="text-xs font-semibold text-red-600 hover:bg-red-50 hover:text-red-700 gap-1.5"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            <span>Hapus Laporan</span>
+          </Button>
+
           <span
             className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${stat.bg} ${stat.text} ${stat.border}`}
           >
@@ -144,19 +245,21 @@ export default function AdminReportDetailPage() {
         </div>
       </div>
 
-      {/* Success Notification Alert */}
+      {/* Notification Alert */}
       {notification && (
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 flex items-center gap-3 text-sm text-emerald-800 animate-in fade-in">
-          <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
-          <span>{notification}</span>
-        </div>
-      )}
-
-      {/* Mutation Error Alert */}
-      {updateStatusMutation.error && (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-4 flex items-center gap-3 text-sm text-red-800">
-          <AlertCircle className="h-5 w-5 text-red-600 shrink-0" />
-          <span>Gagal memperbarui status: {getApiErrorMessage(updateStatusMutation.error)}</span>
+        <div
+          className={`rounded-xl border p-4 flex items-center gap-3 text-sm animate-in fade-in ${
+            notification.type === "success"
+              ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+              : "border-red-200 bg-red-50 text-red-800"
+          }`}
+        >
+          {notification.type === "success" ? (
+            <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
+          ) : (
+            <AlertCircle className="h-5 w-5 text-red-600 shrink-0" />
+          )}
+          <span>{notification.text}</span>
         </div>
       )}
 
@@ -371,7 +474,11 @@ export default function AdminReportDetailPage() {
               <div className="relative pl-6 space-y-6 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-[#e2ebe6]">
                 {statusHistories.map((hist) => {
                   const histStat = statusLabels[hist.new_status] || { label: hist.new_status };
-                  const actor = hist.changed_by?.name || hist.changed_by_name || "Petugas Sistem";
+                  const actor =
+                    typeof hist.changed_by === "object" && hist.changed_by !== null
+                      ? hist.changed_by.name
+                      : hist.changed_by_name ||
+                        (hist.changed_by ? `Admin #${hist.changed_by}` : "Sistem");
 
                   return (
                     <div key={hist.id} className="relative">
@@ -403,6 +510,100 @@ export default function AdminReportDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Edit Report Information Modal (PUT /waste-reports/:id) */}
+      <Modal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        title={`Edit Informasi Laporan #${report.id}`}
+        description="Perbarui informasi rincian laporan pengaduan sampah."
+      >
+        <form onSubmit={handleEditReportSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="editReportTitle" required>
+              Judul Laporan
+            </Label>
+            <div className="mt-1.5">
+              <Input
+                id="editReportTitle"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="editReportCategory" required>
+              Kategori Sampah
+            </Label>
+            <div className="mt-1.5">
+              <Select
+                id="editReportCategory"
+                value={editCategory}
+                onChange={(e) => setEditCategory(e.target.value as WasteCategory)}
+              >
+                <option value="plastic">Plastik</option>
+                <option value="organic">Organik</option>
+                <option value="paper">Kertas</option>
+              </Select>
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="editReportAddress">
+              Alamat / Patokan Lokasi
+            </Label>
+            <div className="mt-1.5">
+              <Input
+                id="editReportAddress"
+                value={editAddress}
+                onChange={(e) => setEditAddress(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="editReportDesc" required>
+              Deskripsi Laporan
+            </Label>
+            <div className="mt-1.5">
+              <Textarea
+                id="editReportDesc"
+                rows={4}
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#f0f4f2]">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setIsEditModalOpen(false)}
+              disabled={updateReportMutation.isPending}
+            >
+              Batal
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={updateReportMutation.isPending}
+            >
+              {updateReportMutation.isPending ? (
+                <>
+                  <Spinner className="mr-1.5" />
+                  Menyimpan...
+                </>
+              ) : (
+                "Simpan Perubahan"
+              )}
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

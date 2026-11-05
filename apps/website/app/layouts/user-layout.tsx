@@ -1,7 +1,7 @@
-import React from "react";
-import { Link, useLocation } from "react-router";
+import React, { useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router";
 import {
-  Home,
+  LayoutDashboard,
   Search,
   ScanLine,
   Clock,
@@ -9,9 +9,17 @@ import {
   Recycle,
   PlusCircle,
   LogOut,
+  ChevronLeft,
+  ChevronRight,
+  HelpCircle,
+  Mail,
+  Bell,
+  ChevronDown,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "~/lib/utils";
 import { useCurrentUser, useLogout } from "~/features/auth/hooks/use-auth";
+import { useUserDashboard } from "~/features/dashboard/hooks/use-dashboard";
 
 interface UserLayoutProps {
   children: React.ReactNode;
@@ -19,7 +27,10 @@ interface UserLayoutProps {
 
 export function UserLayout({ children }: UserLayoutProps) {
   const location = useLocation();
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
   const { data: user } = useCurrentUser();
+  const { data: dashboard } = useUserDashboard();
   const logoutMutation = useLogout();
 
   const userInitial = user?.name
@@ -32,196 +43,317 @@ export function UserLayout({ children }: UserLayoutProps) {
     : "WR";
   const displayName = user?.name || "Warga";
 
-  const navigation = [
+  const totalReportsCount = dashboard?.total_reports ? String(dashboard.total_reports) : undefined;
+  const pendingReportsCount = dashboard?.pending_reports ? String(dashboard.pending_reports) : undefined;
+
+  // Handle Search Input in Sidebar (Maps to GET /waste-reports?search=...)
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/user/reports?search=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
+
+  /**
+   * Menu items based directly on API Documentation:
+   * 1. GET /user/dashboard -> Dashboard Warga
+   * 2. POST /waste-reports/classify & POST /waste-reports -> Buat Laporan AI
+   * 3. GET /waste-reports (User only) -> Riwayat Laporan Saya
+   * 4. GET/PUT /profile -> Profil Akun
+   * 5. POST /auth/logout -> Logout
+   */
+  const mainMenuItems = [
     {
       name: "Dashboard",
       href: "/user/dashboard",
-      icon: Home,
-    },
-    {
-      name: "Buat Laporan Baru",
-      href: "/user/reports/new",
-      icon: PlusCircle,
-      highlight: true,
+      icon: LayoutDashboard,
+      active:
+        location.pathname === "/user/dashboard" ||
+        location.pathname === "/user",
     },
     {
       name: "Riwayat Laporan",
       href: "/user/reports",
       icon: Clock,
+      badge: totalReportsCount,
+      active:
+        location.pathname.startsWith("/user/reports") &&
+        location.pathname !== "/user/reports/new",
     },
+    {
+      name: "Lapor Sampah AI",
+      href: "/user/reports/new",
+      icon: PlusCircle,
+      active: location.pathname === "/user/reports/new",
+    },
+  ];
+
+  const accountItems = [
     {
       name: "Profil Akun",
       href: "/user/profile",
       icon: User,
+      active: location.pathname.startsWith("/user/profile"),
     },
   ];
 
-  // Route active states
+  // Mobile navigation active states
   const isDashboardActive =
     location.pathname === "/user/dashboard" || location.pathname === "/user";
   const isSearchActive =
     location.pathname === "/user/reports" &&
     location.search.includes("focus=search");
   const isReportsActive =
-    location.pathname === "/user/reports" &&
-    !location.search.includes("focus=search") ||
+    (location.pathname === "/user/reports" &&
+      !location.search.includes("focus=search")) ||
     (location.pathname.startsWith("/user/reports/") &&
       location.pathname !== "/user/reports/new");
   const isNewReportActive = location.pathname === "/user/reports/new";
   const isProfileActive = location.pathname.startsWith("/user/profile");
 
   return (
-    <div className="flex min-h-screen bg-[#f5f8f6]">
-      {/* Desktop Sidebar (Only visible on lg screens and up - NEVER a sidebar on mobile) */}
-      <aside className="hidden lg:flex w-72 flex-col border-r border-[#e2ebe6] bg-[#fcfcfc] text-[#2e4a21] shrink-0 min-h-screen">
+    <div className="flex min-h-screen bg-[#f3f4f6] text-[#181d1a]">
+      {/* Desktop Sidebar (Only visible on lg screens and up) */}
+      <aside className="hidden lg:flex w-68 flex-col border-r border-[#e5e9e7] bg-white text-[#181d1a] shrink-0 min-h-screen">
         {/* Brand Header */}
-        <div className="flex h-18 items-center justify-between px-6 border-b border-[#e2ebe6]">
+        <div className="flex h-18 items-center justify-between px-6 border-b border-[#f0f3f1]">
           <Link to="/user/dashboard" className="flex items-center gap-3 group">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#259e73] text-white shadow-xs group-hover:bg-[#1f8561] transition-colors">
-              <Recycle className="h-6 w-6" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#107549] to-[#0b5434] text-white shadow-xs group-hover:bg-[#0c5c36] transition-colors">
+              <Recycle className="h-5 w-5" />
             </div>
             <div>
-              <span className="text-base font-bold tracking-tight text-[#2e4a21] block">
+              <span className="text-base font-bold tracking-tight text-[#181d1a] block leading-tight">
                 Smart Waste
               </span>
-              <span className="text-xs font-medium text-[#259e73] flex items-center gap-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#259e73]" />
+              <span className="text-[10px] font-semibold text-[#107549] flex items-center gap-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#107549]" />
                 Portal Warga
               </span>
             </div>
           </Link>
         </div>
 
-        {/* Quick Report CTA Button in Sidebar */}
-        <div className="p-4 pb-2">
-          <Link
-            to="/user/reports/new"
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#259e73] px-4 py-3 text-sm font-semibold text-white shadow-xs hover:bg-[#1f8561] transition-all active:scale-[0.98]"
-          >
-            <PlusCircle className="h-5 w-5" />
-            Lapor Sampah AI
-          </Link>
+        {/* Search Bar (Maps to GET /waste-reports?search=...) */}
+        <div className="px-4 pt-4 pb-1">
+          <form onSubmit={handleSearchSubmit} className="relative flex items-center">
+            <Search className="absolute left-3 h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Cari laporan saya..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full rounded-xl border border-[#e5e9e7] bg-[#f9faf9] pl-9 pr-11 py-2 text-xs text-[#181d1a] placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-[#107549] transition-all"
+            />
+            <span className="absolute right-2.5 rounded border border-gray-200 bg-white px-1.5 py-0.5 text-[10px] font-medium text-gray-400 shadow-2xs">
+              ↵
+            </span>
+          </form>
         </div>
 
-        {/* Navigation Links */}
-        <nav className="flex-1 space-y-1 px-4 py-4 overflow-y-auto">
-          <div className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-[#5d6f66]">
-            Navigasi
+        {/* Navigation Sections */}
+        <nav className="flex-1 space-y-5 px-3 py-3 overflow-y-auto text-xs">
+          {/* Menu Utama */}
+          <div>
+            <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-gray-400">
+              Menu Utama
+            </div>
+            <div className="space-y-1">
+              {mainMenuItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.name}
+                    to={item.href}
+                    className={cn(
+                      "flex items-center justify-between rounded-xl px-3.5 py-2.5 font-medium transition-all duration-150",
+                      item.active
+                        ? "bg-[#181d1a] text-white shadow-xs"
+                        : "text-gray-600 hover:bg-[#f3f6f4] hover:text-[#181d1a]"
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Icon
+                        className={cn(
+                          "h-4 w-4 shrink-0",
+                          item.active ? "text-white" : "text-gray-500"
+                        )}
+                      />
+                      <span>{item.name}</span>
+                    </div>
+                    {item.badge && (
+                      <span
+                        className={cn(
+                          "rounded-full px-2 py-0.5 text-[10px] font-semibold",
+                          item.active
+                            ? "bg-white/20 text-white"
+                            : "bg-gray-100 text-gray-600"
+                        )}
+                      >
+                        {item.badge}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
           </div>
-          {navigation.map((item) => {
-            const isActive =
-              item.href === "/user/reports"
-                ? isReportsActive || isSearchActive
-                : item.href === "/user/reports/new"
-                ? isNewReportActive
-                : item.href === "/user/dashboard"
-                ? isDashboardActive
-                : location.pathname.startsWith(item.href);
-            const Icon = item.icon;
 
-            return (
-              <Link
-                key={item.name}
-                to={item.href}
-                className={cn(
-                  "flex items-center gap-3.5 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors",
-                  isActive
-                    ? "bg-[#acebd4]/40 text-[#2e4a21] font-semibold border border-[#acebd4]"
-                    : "text-[#5d6f66] hover:bg-[#acebd4]/15 hover:text-[#2e4a21]"
-                )}
+          {/* Pengaturan Akun */}
+          <div>
+            <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-gray-400">
+              Pengaturan Akun
+            </div>
+            <div className="space-y-1">
+              {accountItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.name}
+                    to={item.href}
+                    className={cn(
+                      "flex items-center justify-between rounded-xl px-3.5 py-2.5 font-medium transition-all duration-150",
+                      item.active
+                        ? "bg-[#181d1a] text-white shadow-xs"
+                        : "text-gray-600 hover:bg-[#f3f6f4] hover:text-[#181d1a]"
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Icon
+                        className={cn(
+                          "h-4 w-4 shrink-0",
+                          item.active ? "text-white" : "text-gray-500"
+                        )}
+                      />
+                      <span>{item.name}</span>
+                    </div>
+                  </Link>
+                );
+              })}
+              <button
+                onClick={() => logoutMutation.mutate()}
+                disabled={logoutMutation.isPending}
+                className="w-full flex items-center gap-3 rounded-xl px-3.5 py-2.5 font-medium text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors text-left cursor-pointer"
               >
-                <Icon
-                  className={cn(
-                    "h-5 w-5",
-                    isActive ? "text-[#259e73]" : "text-[#5d6f66]"
-                  )}
-                />
-                {item.name}
-              </Link>
-            );
-          })}
+                <LogOut className="h-4 w-4 text-gray-500 shrink-0" />
+                <span>Keluar Akun</span>
+              </button>
+            </div>
+          </div>
         </nav>
 
-        {/* User Profile & Logout */}
-        <div className="p-4 border-t border-[#e2ebe6] bg-[#fcfcfc]">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#acebd4] text-[#2e4a21] text-xs font-bold border border-[#259e73]/20">
-                {userInitial}
-              </div>
-              <div className="text-left">
-                <p className="text-xs font-semibold text-[#2e4a21] truncate max-w-[130px]">
-                  {displayName}
-                </p>
-                <p className="text-[10px] text-[#5d6f66]">
-                  {user?.role === "admin" ? "Administrator" : "Warga Terverifikasi"}
-                </p>
-              </div>
+        {/* AI Camera Assistant Banner Card */}
+        <div className="p-3 border-t border-[#f0f3f1]">
+          <div className="rounded-2xl border border-[#e5ebe7] bg-gradient-to-b from-[#f9faf9] to-[#f4f7f5] p-3.5 shadow-2xs">
+            <div className="flex items-center gap-1.5 font-bold text-xs text-[#181d1a]">
+              <Sparkles className="h-3.5 w-3.5 text-[#107549]" />
+              <span>AI Computer Vision</span>
             </div>
-            <button
-              onClick={() => logoutMutation.mutate()}
-              title="Keluar"
-              disabled={logoutMutation.isPending}
-              className="rounded-lg p-2 text-[#5d6f66] hover:bg-red-50 hover:text-red-600 transition-colors cursor-pointer"
-            >
-              <LogOut className="h-4 w-4" />
-            </button>
+            <p className="mt-1 text-[11px] leading-relaxed text-gray-500">
+              Ambil foto sampah di sekitar Anda, AI akan mendeteksi jenisnya.
+            </p>
+            <div className="mt-3">
+              <Link
+                to="/user/reports/new"
+                className="flex items-center justify-center gap-1.5 rounded-xl bg-[#107549] hover:bg-[#0c5c36] px-3 py-2 text-[11px] font-semibold text-white shadow-xs transition-colors w-full"
+              >
+                <PlusCircle className="h-3.5 w-3.5" />
+                <span>Lapor Sekarang</span>
+              </Link>
+            </div>
           </div>
         </div>
       </aside>
 
       {/* Main Content Area */}
       <div className="flex flex-1 flex-col min-w-0 overflow-x-hidden">
-        {/* Top Navbar */}
-        <header className="sticky top-0 z-30 flex h-16 sm:h-18 items-center justify-between border-b border-[#e2ebe6] bg-[#fcfcfc] px-4 sm:px-6">
+        {/* Top Header Navbar */}
+        <header className="sticky top-0 z-30 flex h-16 sm:h-18 items-center justify-between border-b border-[#e5e9e7] bg-white px-4 sm:px-8">
           <div className="flex items-center gap-3">
             {/* Mobile Brand Logo */}
             <Link
               to="/user/dashboard"
-              className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#259e73] text-white shadow-xs lg:hidden hover:bg-[#1f8561] transition-colors shrink-0"
+              className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#107549] to-[#0b5434] text-white shadow-xs lg:hidden hover:bg-[#0c5c36] transition-colors shrink-0"
               title="Smart Waste Portal Warga"
             >
               <Recycle className="h-5 w-5" />
             </Link>
-            <div>
-              <div className="flex items-center gap-1.5 lg:hidden">
-                <span className="text-xs font-bold text-[#2e4a21]">Smart Waste</span>
-                <span className="h-1.5 w-1.5 rounded-full bg-[#259e73]" />
-                <span className="text-[10px] font-semibold text-[#259e73]">Warga</span>
-              </div>
-              <p className="hidden lg:block text-xs text-[#5d6f66]">Selamat Datang,</p>
-              <h2 className="text-sm font-semibold text-[#2e4a21] truncate max-w-[160px] sm:max-w-none">
-                {displayName}
-              </h2>
+
+            <div className="hidden sm:flex items-center gap-1.5">
+              <button
+                onClick={() => window.history.back()}
+                className="flex h-8 w-8 items-center justify-center rounded-xl border border-[#e5e9e7] bg-white text-gray-600 hover:bg-[#f7f9f8] transition-colors cursor-pointer"
+                title="Kembali"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => window.history.forward()}
+                className="flex h-8 w-8 items-center justify-center rounded-xl border border-[#e5e9e7] bg-white text-gray-400 hover:bg-[#f7f9f8] transition-colors cursor-pointer"
+                title="Maju"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-500 font-medium">
+              <span className="hover:text-[#181d1a] transition-colors">
+                Smart Waste
+              </span>
+              <span>&gt;</span>
+              <span className="text-[#181d1a] font-semibold">
+                {location.pathname.includes("/user/reports/new")
+                  ? "Buat Laporan AI"
+                  : location.pathname.includes("/user/reports")
+                  ? "Riwayat Laporan"
+                  : location.pathname.includes("/user/profile")
+                  ? "Profil Akun"
+                  : "Dashboard"}
+              </span>
             </div>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
             <Link
-              to="/user/reports/new"
-              className="hidden sm:inline-flex items-center gap-1.5 rounded-lg bg-[#259e73] px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-[#1f8561] transition-colors shadow-xs"
+              to="/user/reports"
+              title="Riwayat Laporan Saya"
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#e5e9e7] bg-white text-gray-600 hover:bg-[#f7f9f8] hover:text-[#181d1a] transition-colors cursor-pointer relative"
             >
-              <PlusCircle className="h-3.5 w-3.5" />
-              Lapor
+              <Clock className="h-4 w-4" />
+              {dashboard?.pending_reports ? (
+                <span className="absolute top-2 right-2 h-1.5 w-1.5 rounded-full bg-amber-500" />
+              ) : null}
             </Link>
-            <button
-              onClick={() => logoutMutation.mutate()}
-              title="Keluar dari akun"
-              disabled={logoutMutation.isPending}
-              className="inline-flex sm:hidden items-center justify-center h-8 w-8 rounded-lg border border-[#e2ebe6] text-[#5d6f66] hover:bg-red-50 hover:text-red-600 transition-colors cursor-pointer"
+
+            {/* User Profile Pill */}
+            <Link
+              to="/user/profile"
+              className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-xl hover:bg-[#f7f9f8] transition-colors cursor-pointer"
             >
-              <LogOut className="h-3.5 w-3.5" />
-            </button>
+              <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-[#107549] to-[#acebd4] flex items-center justify-center text-white text-xs font-bold shadow-2xs">
+                {userInitial}
+              </div>
+              <span className="text-xs font-semibold text-[#181d1a] hidden sm:block">
+                {displayName}
+              </span>
+              <ChevronDown className="h-3.5 w-3.5 text-gray-400 hidden sm:block" />
+            </Link>
+
+            <Link to="/user/reports/new">
+              <button className="flex items-center gap-1.5 rounded-xl bg-[#107549] hover:bg-[#0c5c36] text-white px-3.5 py-2 text-xs font-semibold shadow-xs transition-colors cursor-pointer">
+                <PlusCircle className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Lapor AI</span>
+              </button>
+            </Link>
           </div>
         </header>
 
-        {/* Content Body - with bottom padding pb-24 on mobile so bottom navbar never covers content */}
-        <main className="flex-1 p-4 sm:p-6 md:p-8 max-w-6xl w-full mx-auto pb-24 lg:pb-8">
+        {/* Content Body */}
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1400px] w-full mx-auto pb-24 lg:pb-8">
           {children}
         </main>
       </div>
 
-      {/* Mobile Full-Width Bottom Navigation Bar (Non-floating, attached to bottom edges) */}
+      {/* Mobile Full-Width Bottom Navigation Bar */}
       <nav
         aria-label="Mobile Bottom Navigation"
         className="fixed bottom-0 inset-x-0 w-full z-40 lg:hidden bg-white border-t border-[#e2ebe6] shadow-[0_-4px_25px_rgba(0,0,0,0.06)] rounded-t-2xl sm:rounded-t-3xl"
@@ -236,14 +368,14 @@ export function UserLayout({ children }: UserLayoutProps) {
             className={cn(
               "flex flex-col items-center justify-center py-1 transition-colors text-center",
               isDashboardActive
-                ? "text-[#259e73] font-semibold"
-                : "text-[#5d6f66] hover:text-[#2e4a21]"
+                ? "text-[#107549] font-semibold"
+                : "text-gray-500 hover:text-[#181d1a]"
             )}
           >
-            <Home
+            <LayoutDashboard
               className={cn(
                 "h-5 w-5 transition-transform",
-                isDashboardActive && "fill-[#259e73]/15 stroke-[#259e73]"
+                isDashboardActive && "stroke-[#107549]"
               )}
             />
             <span className="text-[11px] mt-1 leading-none font-medium">Home</span>
@@ -255,8 +387,8 @@ export function UserLayout({ children }: UserLayoutProps) {
             className={cn(
               "flex flex-col items-center justify-center py-1 transition-colors text-center",
               isSearchActive
-                ? "text-[#259e73] font-semibold"
-                : "text-[#5d6f66] hover:text-[#2e4a21]"
+                ? "text-[#107549] font-semibold"
+                : "text-gray-500 hover:text-[#181d1a]"
             )}
           >
             <Search
@@ -277,8 +409,8 @@ export function UserLayout({ children }: UserLayoutProps) {
             >
               <div
                 className={cn(
-                  "flex h-13 w-13 sm:h-14 sm:w-14 items-center justify-center rounded-full bg-[#259e73] text-white shadow-lg shadow-[#259e73]/35 border-4 border-white transition-all duration-200 active:scale-95 group-hover:bg-[#1f8561] group-hover:scale-105",
-                  isNewReportActive && "ring-2 ring-[#259e73] ring-offset-2"
+                  "flex h-13 w-13 sm:h-14 sm:w-14 items-center justify-center rounded-full bg-[#107549] text-white shadow-lg shadow-[#107549]/35 border-4 border-white transition-all duration-200 active:scale-95 group-hover:bg-[#0c5c36] group-hover:scale-105",
+                  isNewReportActive && "ring-2 ring-[#107549] ring-offset-2"
                 )}
               >
                 <ScanLine className="h-6 w-6 stroke-[2.2]" />
@@ -292,8 +424,8 @@ export function UserLayout({ children }: UserLayoutProps) {
             className={cn(
               "flex flex-col items-center justify-center py-1 transition-colors text-center",
               isReportsActive
-                ? "text-[#259e73] font-semibold"
-                : "text-[#5d6f66] hover:text-[#2e4a21]"
+                ? "text-[#107549] font-semibold"
+                : "text-gray-500 hover:text-[#181d1a]"
             )}
           >
             <Clock
@@ -311,14 +443,14 @@ export function UserLayout({ children }: UserLayoutProps) {
             className={cn(
               "flex flex-col items-center justify-center py-1 transition-colors text-center",
               isProfileActive
-                ? "text-[#259e73] font-semibold"
-                : "text-[#5d6f66] hover:text-[#2e4a21]"
+                ? "text-[#107549] font-semibold"
+                : "text-gray-500 hover:text-[#181d1a]"
             )}
           >
             <User
               className={cn(
                 "h-5 w-5 transition-transform",
-                isProfileActive && "fill-[#259e73]/15 stroke-[#259e73] stroke-[2.2]"
+                isProfileActive && "stroke-[#107549] stroke-[2.2]"
               )}
             />
             <span className="text-[11px] mt-1 leading-none font-medium">Profile</span>

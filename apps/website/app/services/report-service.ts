@@ -4,6 +4,7 @@ import type {
   ReportStatus,
   ReportFilterParams,
   WasteClassificationResult,
+  UpdateReportData,
 } from "~/types/report.types";
 import type {
   ApiPaginatedResponse,
@@ -62,6 +63,30 @@ export const reportService = {
         },
       }
     );
+    return response.data.data;
+  },
+
+  async updateReport(
+    id: number,
+    data: UpdateReportData | FormData
+  ): Promise<{ id: number; title: string; status: ReportStatus }> {
+    if (data instanceof FormData) {
+      if (!data.has("_method")) {
+        data.append("_method", "PUT");
+      }
+      const response = await axiosInstance.post<
+        ApiSuccessResponse<{ id: number; title: string; status: ReportStatus }>
+      >(`/waste-reports/${id}`, data, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      return response.data.data;
+    }
+
+    const response = await axiosInstance.put<
+      ApiSuccessResponse<{ id: number; title: string; status: ReportStatus }>
+    >(`/waste-reports/${id}`, data);
     return response.data.data;
   },
 

@@ -1,20 +1,25 @@
 import {
   AlertCircle,
   Calendar,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  Edit,
   ExternalLink,
   FileSpreadsheet,
   Mail,
   Phone,
+  RefreshCw,
   Search,
   Shield,
   Trash2,
   User,
+  UserCheck,
   UserPlus,
   X,
 } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router";
-import { useQueryState, parseAsString, debounce } from "nuqs";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import {
@@ -39,25 +44,11 @@ import {
   useAdminUsers,
   useCreateAdminUser,
   useDeleteAdminUser,
+  useUpdateAdminUser,
 } from "~/features/users/hooks/use-admin-users";
 import { getApiErrorMessage } from "~/lib/axios";
+import type { Role, UserAccount } from "~/types/user.types";
 import type { Route } from "./+types/admin.users";
-
-function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState<T>(value);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [value, delay]);
-
-  return debouncedValue;
-}
 
 export function meta({ }: Route.MetaArgs) {
   return [
@@ -70,37 +61,67 @@ export function meta({ }: Route.MetaArgs) {
 }
 
 export default function AdminUsersPage() {
-  const [searchTerm, setSearchTerm] = useQueryState(
-    "search",
-    parseAsString
-      .withDefault("")
-      .withOptions({
-        shallow: false,
-        limitUrlUpdates: debounce(350),
-        clearOnDefault: true,
-      })
-  );
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState<"all" | "admin" | "user">("all");
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
+  const [actionMessage, setActionMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
-  const debouncedSearch = useDebounce(searchTerm, 350);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+      setPage(1);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
-  const { data, isLoading, isError, error, refetch } = useAdminUsers({
+  const { data, isLoading, isError, error, refetch, isFetching } = useAdminUsers({
     search: debouncedSearch.trim() ? debouncedSearch.trim() : undefined,
+    page,
+    per_page: perPage,
   });
 
   const createUserMutation = useCreateAdminUser();
+  const updateUserMutation = useUpdateAdminUser();
   const deleteUserMutation = useDeleteAdminUser();
 
-  const users = data?.users || [];
+  const allUsers = data?.users || [];
+  // Filter by role on client side if requested
+  const users = roleFilter === "all" ? allUsers : allUsers.filter((u) => u.role === roleFilter);
 
-  // Modal State
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const meta = data?.meta;
+  const totalPages = meta?.last_page || 1;
+  const totalUsers = meta?.total || users.length;
+
+  // Create User Modal State
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [newUserData, setNewUserData] = useState({
     name: "",
     email: "",
     phone: "",
-    role: "user" as "admin" | "user",
+    role: "user" as Role,
     password: "",
   });
+
+  // Edit User Modal State
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<UserAccount | null>(null);
+  const [editFormData, setEditFormData] = useState({
+    name: "",
+    phone: "",
+    role: "user" as Role,
+  });
+
+  const handleOpenEditModal = (user: UserAccount) => {
+    setEditingUser(user);
+    setEditFormData({
+      name: user.name || "",
+      phone: user.phone || "",
+      role: user.role,
+    });
+    setIsEditModalOpen(true);
+  };
 
   const handleCreateUser = (e: React.FormEvent) => {
     e.preventDefault();
@@ -108,23 +129,69 @@ export default function AdminUsersPage() {
       {
         name: newUserData.name,
         email: newUserData.email,
-        phone: newUserData.phone,
+        phone: newUserData.phone || undefined,
         role: newUserData.role,
         password: newUserData.password,
         password_confirmation: newUserData.password,
       },
       {
         onSuccess: () => {
-          setIsModalOpen(false);
+          setIsCreateModalOpen(false);
           setNewUserData({ name: "", email: "", phone: "", role: "user", password: "" });
+          setActionMessage({
+            type: "success",
+            text: "Akun pengguna baru berhasil ditambahkan.",
+          });
+          setTimeout(() => setActionMessage(null), 4000);
         },
       }
     );
   };
 
-  const handleDeleteUser = (id: number) => {
-    if (confirm("Apakah Anda yakin ingin menonaktifkan / menghapus pengguna ini?")) {
-      deleteUserMutation.mutate(id);
+  const handleUpdateUser = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingUser) return;
+
+    updateUserMutation.mutate(
+      {
+        id: editingUser.id,
+        data: {
+          name: editFormData.name,
+          phone: editFormData.phone || undefined,
+          role: editFormData.role,
+        },
+      },
+      {
+        onSuccess: () => {
+          setIsEditModalOpen(false);
+          setEditingUser(null);
+          setActionMessage({
+            type: "success",
+            text: `Data akun #${editingUser.id} berhasil diperbarui.`,
+          });
+          setTimeout(() => setActionMessage(null), 4000);
+        },
+      }
+    );
+  };
+
+  const handleDeleteUser = (user: UserAccount) => {
+    if (confirm(`Apakah Anda yakin ingin menghapus akun pengguna "${user.name}"?`)) {
+      deleteUserMutation.mutate(user.id, {
+        onSuccess: () => {
+          setActionMessage({
+            type: "success",
+            text: `Akun "${user.name}" berhasil dihapus.`,
+          });
+          setTimeout(() => setActionMessage(null), 4000);
+        },
+        onError: (err) => {
+          setActionMessage({
+            type: "error",
+            text: `Gagal menghapus pengguna: ${getApiErrorMessage(err)}`,
+          });
+        },
+      });
     }
   };
 
@@ -133,52 +200,114 @@ export default function AdminUsersPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-[#2e4a21]">
-            Kelola Akun Pengguna
-          </h1>
-          <p className="text-sm text-[#5d6f66] mt-0.5">
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-2xl font-bold tracking-tight text-[#2e4a21]">
+              Kelola Akun Pengguna
+            </h1>
+            <span className="rounded-full bg-[#acebd4]/40 px-2.5 py-0.5 text-xs font-semibold text-[#2e4a21] border border-[#259e73]/20">
+              {totalUsers} Pengguna Terdaftar
+            </span>
+          </div>
+          <p className="text-xs text-[#5d6f66] mt-1">
             Daftar seluruh warga pelapor dan akun administrator dinas kebersihan.
           </p>
         </div>
 
-        <Button
-          variant="primary"
-          onClick={() => setIsModalOpen(true)}
-          className="gap-2 font-semibold shadow-xs"
-        >
-          <UserPlus className="h-4 w-4" />
-          <span>Tambah Pengguna</span>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => refetch()}
+            disabled={isFetching}
+            className="text-xs font-semibold flex items-center gap-1.5"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${isFetching ? "animate-spin" : ""}`} />
+            <span>{isFetching ? "Menyegarkan..." : "Segarkan"}</span>
+          </Button>
+
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => setIsCreateModalOpen(true)}
+            className="gap-1.5 text-xs font-semibold shadow-xs"
+          >
+            <UserPlus className="h-4 w-4" />
+            <span>Tambah Pengguna</span>
+          </Button>
+        </div>
       </div>
 
-      {/* Filter: Search Only using InputGroup with clear X button */}
+      {/* Notification Alert */}
+      {actionMessage && (
+        <div
+          className={`rounded-xl border p-4 flex items-center justify-between text-xs font-medium animate-in fade-in ${
+            actionMessage.type === "success"
+              ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+              : "border-red-200 bg-red-50 text-red-800"
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            {actionMessage.type === "success" ? (
+              <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+            ) : (
+              <AlertCircle className="h-4 w-4 text-red-600 shrink-0" />
+            )}
+            <span>{actionMessage.text}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setActionMessage(null)}
+            className="text-gray-400 hover:text-gray-600"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
+
+      {/* Search and Role Filter Toolbar */}
       <div className="rounded-2xl border border-[#e2ebe6] bg-[#fcfcfc] p-4 shadow-xs">
-        <InputGroup className="h-10 bg-white border-[#e2ebe6] rounded-xl focus-within:border-[#259e73] focus-within:ring-2 focus-within:ring-[#259e73]/20">
-          <InputGroupAddon align="inline-start">
-            <Search className="h-4 w-4 text-[#5d6f66]" />
-          </InputGroupAddon>
-          <InputGroupInput
-            type="text"
-            placeholder="Cari berdasarkan nama atau email pengguna..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="text-xs sm:text-sm text-[#2e4a21]"
-          />
-          {searchTerm && (
-            <InputGroupAddon align="inline-end">
-              <InputGroupButton
-                size="icon-xs"
-                variant="ghost"
-                onClick={() => setSearchTerm("")}
-                title="Hapus pencarian"
-                aria-label="Clear query"
-                className="text-[#5d6f66] hover:text-[#2e4a21] hover:bg-[#f5f8f6] cursor-pointer"
-              >
-                <X className="size-3.5" />
-              </InputGroupButton>
-            </InputGroupAddon>
-          )}
-        </InputGroup>
+        <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+          <div className="sm:col-span-8">
+            <InputGroup className="h-10 bg-white border-[#e2ebe6] rounded-xl focus-within:border-[#259e73] focus-within:ring-2 focus-within:ring-[#259e73]/20">
+              <InputGroupAddon align="inline-start">
+                <Search className="h-4 w-4 text-[#5d6f66]" />
+              </InputGroupAddon>
+              <InputGroupInput
+                type="text"
+                placeholder="Cari berdasarkan nama atau email pengguna..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="text-xs sm:text-sm text-[#2e4a21]"
+              />
+              {searchTerm && (
+                <InputGroupAddon align="inline-end">
+                  <InputGroupButton
+                    size="icon-xs"
+                    variant="ghost"
+                    onClick={() => setSearchTerm("")}
+                    title="Hapus pencarian"
+                    aria-label="Clear query"
+                    className="text-[#5d6f66] hover:text-[#2e4a21] hover:bg-[#f5f8f6] cursor-pointer"
+                  >
+                    <X className="size-3.5" />
+                  </InputGroupButton>
+                </InputGroupAddon>
+              )}
+            </InputGroup>
+          </div>
+
+          <div className="sm:col-span-4">
+            <Select
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value as "all" | "admin" | "user")}
+              className="text-xs h-10 bg-white"
+            >
+              <option value="all">Semua Peran (Role)</option>
+              <option value="admin">Administrator (Admin DLH)</option>
+              <option value="user">Warga Pelapor (User)</option>
+            </Select>
+          </div>
+        </div>
       </div>
 
       {isError && (
@@ -193,7 +322,7 @@ export default function AdminUsersPage() {
         </div>
       )}
 
-      {/* Users Table using shadcn Table */}
+      {/* Users Table */}
       <div className="rounded-2xl border border-[#e2ebe6] bg-[#fcfcfc] overflow-hidden shadow-xs">
         <Table>
           <TableHeader className="bg-[#f5f8f6]">
@@ -219,7 +348,7 @@ export default function AdminUsersPage() {
             ) : users.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center py-12 text-[#5d6f66]">
-                  Tidak ada akun pengguna yang sesuai dengan pencarian.
+                  Tidak ada akun pengguna yang sesuai dengan kriteria pencarian.
                 </TableCell>
               </TableRow>
             ) : (
@@ -286,28 +415,39 @@ export default function AdminUsersPage() {
                   </TableCell>
                   <TableCell className="px-5 py-4 whitespace-nowrap text-right">
                     <div className="flex items-center justify-end gap-1.5">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleOpenEditModal(user)}
+                        className="h-8 px-2.5 text-xs text-gray-600 hover:text-[#2e4a21] hover:bg-[#f5f8f6]"
+                        title="Edit Data Pengguna"
+                      >
+                        <Edit className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline ml-1">Edit</span>
+                      </Button>
+
                       <Link to={`/admin/users/${user.id}`}>
                         <Button
                           variant="ghost"
                           size="sm"
                           className="h-8 px-2.5 text-xs text-[#259e73] hover:bg-[#acebd4]/20"
+                          title="Lihat Detail Pengguna"
                         >
-                          Detail
-                          <ExternalLink className="h-3.5 w-3.5 ml-1" />
+                          <ExternalLink className="h-3.5 w-3.5" />
+                          <span className="hidden sm:inline ml-1">Detail</span>
                         </Button>
                       </Link>
-                      {user.role !== "admin" && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDeleteUser(user.id)}
-                          disabled={deleteUserMutation.isPending}
-                          className="h-8 w-8 text-red-600 hover:bg-red-50 hover:text-red-700 cursor-pointer"
-                          title="Hapus Akun Pengguna"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      )}
+
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDeleteUser(user)}
+                        disabled={deleteUserMutation.isPending}
+                        className="h-8 w-8 text-red-600 hover:bg-red-50 hover:text-red-700 cursor-pointer"
+                        title="Hapus Akun Pengguna"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -315,12 +455,88 @@ export default function AdminUsersPage() {
             )}
           </TableBody>
         </Table>
+
+        {/* Table Footer with Pagination Controls */}
+        <div className="px-6 py-3.5 bg-[#f5f8f6] border-t border-[#e2ebe6] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#5d6f66]">
+          <div className="flex items-center gap-3">
+            <span>
+              Menampilkan {users.length} dari {totalUsers} pengguna
+            </span>
+            <div className="flex items-center gap-1">
+              <span>Per baris:</span>
+              <select
+                value={perPage}
+                onChange={(e) => {
+                  setPerPage(Number(e.target.value));
+                  setPage(1);
+                }}
+                className="rounded-md border border-[#e2ebe6] bg-white px-2 py-0.5 text-xs text-[#2e4a21] focus:outline-none"
+              >
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="font-medium text-[#2e4a21] mr-1">
+              Halaman {meta?.current_page || page} dari {totalPages}
+            </span>
+
+            <Button
+              variant="outline"
+              size="icon"
+              disabled={page <= 1 || isLoading}
+              onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+              className="h-8 w-8"
+              title="Halaman Sebelumnya"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+
+            {Array.from({ length: Math.min(5, totalPages) }, (_, idx) => {
+              let pageNum = idx + 1;
+              if (totalPages > 5 && page > 3) {
+                pageNum = page - 2 + idx;
+                if (pageNum > totalPages) pageNum = totalPages - (4 - idx);
+              }
+              if (pageNum < 1 || pageNum > totalPages) return null;
+
+              return (
+                <button
+                  key={pageNum}
+                  type="button"
+                  onClick={() => setPage(pageNum)}
+                  className={`h-8 w-8 rounded-lg text-xs font-semibold transition-colors ${
+                    pageNum === page
+                      ? "bg-[#259e73] text-white shadow-xs"
+                      : "text-gray-600 hover:bg-gray-100"
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              );
+            })}
+
+            <Button
+              variant="outline"
+              size="icon"
+              disabled={page >= totalPages || isLoading}
+              onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+              className="h-8 w-8"
+              title="Halaman Berikutnya"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
       </div>
 
-      {/* Add User Modal */}
+      {/* Add User Modal (POST /api/admin/users) */}
       <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
         title="Tambah Pengguna Baru"
         description="Buat akun admin atau akun warga baru ke dalam database sistem."
       >
@@ -377,7 +593,7 @@ export default function AdminUsersPage() {
               <Select
                 id="addRole"
                 value={newUserData.role}
-                onChange={(e) => setNewUserData({ ...newUserData, role: e.target.value as "admin" | "user" })}
+                onChange={(e) => setNewUserData({ ...newUserData, role: e.target.value as Role })}
               >
                 <option value="user">Warga / Pelapor Biasa</option>
                 <option value="admin">Administrator Dinas (DLH)</option>
@@ -400,7 +616,7 @@ export default function AdminUsersPage() {
           </div>
 
           <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#f0f4f2]">
-            <Button type="button" variant="ghost" onClick={() => setIsModalOpen(false)}>
+            <Button type="button" variant="ghost" onClick={() => setIsCreateModalOpen(false)}>
               Batal
             </Button>
             <Button type="submit" variant="primary" disabled={createUserMutation.isPending}>
@@ -416,6 +632,82 @@ export default function AdminUsersPage() {
           </div>
         </form>
       </Modal>
+
+      {/* Edit User Modal (PUT /api/admin/users/:id) */}
+      {editingUser && (
+        <Modal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          title={`Edit Akun Pengguna #${editingUser.id}`}
+          description={`Email: ${editingUser.email} (Email bersifat permanen)`}
+        >
+          <form onSubmit={handleUpdateUser} className="space-y-4">
+            {updateUserMutation.error && (
+              <p className="text-xs text-red-600 bg-red-50 p-2.5 rounded-lg border border-red-200">
+                {getApiErrorMessage(updateUserMutation.error)}
+              </p>
+            )}
+
+            <div>
+              <Label htmlFor="editName" required>Nama Lengkap</Label>
+              <div className="mt-1.5">
+                <Input
+                  id="editName"
+                  value={editFormData.name}
+                  onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="editPhone">Nomor Telepon</Label>
+              <div className="mt-1.5">
+                <Input
+                  id="editPhone"
+                  type="tel"
+                  placeholder="0812-3344-5566"
+                  value={editFormData.phone}
+                  onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="editRole" required>Hak Akses (Role)</Label>
+              <div className="mt-1.5">
+                <Select
+                  id="editRole"
+                  value={editFormData.role}
+                  onChange={(e) => setEditFormData({ ...editFormData, role: e.target.value as Role })}
+                >
+                  <option value="user">Warga / Pelapor Biasa</option>
+                  <option value="admin">Administrator Dinas (DLH)</option>
+                </Select>
+              </div>
+              <p className="text-[11px] text-[#5d6f66] mt-1">
+                Catatan: Sistem akan mencegah penurunan role jika hanya tersisa 1 administrator.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#f0f4f2]">
+              <Button type="button" variant="ghost" onClick={() => setIsEditModalOpen(false)}>
+                Batal
+              </Button>
+              <Button type="submit" variant="primary" disabled={updateUserMutation.isPending}>
+                {updateUserMutation.isPending ? (
+                  <>
+                    <Spinner className="mr-1.5" />
+                    Menyimpan...
+                  </>
+                ) : (
+                  "Simpan Perubahan"
+                )}
+              </Button>
+            </div>
+          </form>
+        </Modal>
+      )}
     </div>
   );
 }

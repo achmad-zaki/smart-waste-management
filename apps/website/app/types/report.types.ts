@@ -60,6 +60,15 @@ export interface WasteClassificationResult {
   confidence_score: number;
 }
 
+export interface UpdateReportData {
+  title?: string;
+  description?: string;
+  waste_category?: WasteCategory;
+  latitude?: number;
+  longitude?: number;
+  address?: string;
+}
+
 export interface ReportFilterParams {
   search?: string;
   status?: string;

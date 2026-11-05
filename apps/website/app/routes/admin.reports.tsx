@@ -1,14 +1,22 @@
 import {
   AlertCircle,
+  ArrowUpDown,
+  Calendar,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
   Clock,
   Edit,
   ExternalLink,
+  Filter,
   MapPin,
+  RefreshCw,
   Search,
   Sparkles,
   Trash2,
+  X,
 } from "lucide-react";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useSearchParams } from "react-router";
 import { Button } from "~/components/ui/button";
 import { Spinner } from "~/components/ui/spinner";
@@ -35,24 +43,65 @@ export function meta({}: Route.MetaArgs) {
     { title: "Kelola Laporan Sampah - Admin Smart Waste" },
     {
       name: "description",
-      content: "Kelola status dan verifikasi laporan sampah dari masyarakat secara terpadu.",
+      content: "Kelola status, filter, dan verifikasi laporan sampah dari masyarakat secara terpadu.",
     },
   ];
 }
 
 export default function AdminReportsPage() {
-  const [searchParams] = useSearchParams();
-  const initialStatusFilter = searchParams.get("status") || "all";
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState(initialStatusFilter);
-  const [categoryFilter, setCategoryFilter] = useState("all");
+  // URL Query Sync
+  const initialStatus = searchParams.get("status") || "all";
+  const initialCategory = searchParams.get("category") || "all";
+  const initialSearch = searchParams.get("search") || "";
+  const initialPage = Number(searchParams.get("page")) || 1;
 
-  // TanStack Query Hooks
-  const { data, isLoading, isError, error, refetch } = useReports({
+  const [searchTerm, setSearchTerm] = useState(initialSearch);
+  const [debouncedSearch, setDebouncedSearch] = useState(initialSearch);
+  const [statusFilter, setStatusFilter] = useState(initialStatus);
+  const [categoryFilter, setCategoryFilter] = useState(initialCategory);
+  const [dateFrom, setDateFrom] = useState(searchParams.get("date_from") || "");
+  const [dateTo, setDateTo] = useState(searchParams.get("date_to") || "");
+  const [sortBy, setSortBy] = useState<string>(searchParams.get("sort_by") || "created_at");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">(
+    (searchParams.get("sort_direction") as "asc" | "desc") || "desc"
+  );
+  const [page, setPage] = useState(initialPage);
+  const [perPage, setPerPage] = useState(10);
+
+  const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
+  const [actionMessage, setActionMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+      setPage(1);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Sync state if URL changes externally
+  useEffect(() => {
+    const urlStatus = searchParams.get("status");
+    if (urlStatus && urlStatus !== statusFilter) {
+      setStatusFilter(urlStatus);
+      setPage(1);
+    }
+  }, [searchParams]);
+
+  // TanStack Query Hook with full API params
+  const { data, isLoading, isError, error, refetch, isFetching } = useReports({
     status: statusFilter !== "all" ? statusFilter : undefined,
     waste_category: categoryFilter !== "all" ? categoryFilter : undefined,
-    search: searchTerm.trim() ? searchTerm.trim() : undefined,
+    search: debouncedSearch.trim() ? debouncedSearch.trim() : undefined,
+    date_from: dateFrom || undefined,
+    date_to: dateTo || undefined,
+    sort_by: sortBy,
+    sort_direction: sortDirection,
+    page,
+    per_page: perPage,
   });
 
   const updateStatusMutation = useUpdateReportStatus();
@@ -60,6 +109,8 @@ export default function AdminReportsPage() {
 
   const reports = data?.reports || [];
   const meta = data?.meta;
+  const totalPages = meta?.last_page || 1;
+  const totalItems = meta?.total || reports.length;
 
   // Modal State for Quick Status Change
   const [selectedReport, setSelectedReport] = useState<WasteReport | null>(null);
@@ -88,15 +139,53 @@ export default function AdminReportsPage() {
         onSuccess: () => {
           setIsModalOpen(false);
           setSelectedReport(null);
+          setActionMessage({
+            type: "success",
+            text: `Status laporan #${selectedReport.id} berhasil diperbarui.`,
+          });
+          setTimeout(() => setActionMessage(null), 4000);
+        },
+        onError: (err) => {
+          setActionMessage({
+            type: "error",
+            text: `Gagal memperbarui status: ${getApiErrorMessage(err)}`,
+          });
         },
       }
     );
   };
 
   const handleDelete = (id: number) => {
-    if (confirm("Apakah Anda yakin ingin menghapus laporan ini?")) {
-      deleteMutation.mutate(id);
+    if (confirm(`Apakah Anda yakin ingin menghapus laporan #${id}? Tindakan ini permanen.`)) {
+      deleteMutation.mutate(id, {
+        onSuccess: () => {
+          setActionMessage({
+            type: "success",
+            text: `Laporan #${id} berhasil dihapus dari sistem.`,
+          });
+          setTimeout(() => setActionMessage(null), 4000);
+        },
+        onError: (err) => {
+          setActionMessage({
+            type: "error",
+            text: `Gagal menghapus laporan: ${getApiErrorMessage(err)}`,
+          });
+        },
+      });
     }
+  };
+
+  const handleResetFilters = () => {
+    setSearchTerm("");
+    setDebouncedSearch("");
+    setStatusFilter("all");
+    setCategoryFilter("all");
+    setDateFrom("");
+    setDateTo("");
+    setSortBy("created_at");
+    setSortDirection("desc");
+    setPage(1);
+    setSearchParams({});
   };
 
   return (
@@ -104,11 +193,16 @@ export default function AdminReportsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-[#2e4a21]">
-            Kelola Seluruh Laporan Sampah
-          </h1>
-          <p className="text-sm text-[#5d6f66] mt-0.5">
-            Daftar pengaduan warga secara terpusat untuk verifikasi dan pembaruan armada dinas.
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-2xl font-bold tracking-tight text-[#2e4a21]">
+              Kelola Seluruh Laporan Sampah
+            </h1>
+            <span className="rounded-full bg-[#acebd4]/40 px-2.5 py-0.5 text-xs font-semibold text-[#2e4a21] border border-[#259e73]/20">
+              {totalItems} Total
+            </span>
+          </div>
+          <p className="text-xs text-[#5d6f66] mt-1">
+            Daftar pengaduan warga secara terpusat untuk verifikasi dan pembaruan armada dinas kebersihan.
           </p>
         </div>
 
@@ -117,40 +211,91 @@ export default function AdminReportsPage() {
             variant="outline"
             size="sm"
             onClick={() => refetch()}
-            className="text-xs"
+            disabled={isFetching}
+            className="text-xs font-semibold flex items-center gap-1.5"
           >
-            Segarkan Data
+            <RefreshCw className={`h-3.5 w-3.5 ${isFetching ? "animate-spin" : ""}`} />
+            <span>{isFetching ? "Menyegarkan..." : "Segarkan Data"}</span>
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowAdvancedFilter(!showAdvancedFilter)}
+            className="text-xs font-semibold flex items-center gap-1.5"
+          >
+            <Filter className="h-3.5 w-3.5" />
+            <span>{showAdvancedFilter ? "Tutup Filter Lanjutan" : "Filter Lanjutan"}</span>
           </Button>
         </div>
       </div>
 
+      {/* Action Notification Alert */}
+      {actionMessage && (
+        <div
+          className={`rounded-xl border p-4 flex items-center justify-between text-xs font-medium animate-in fade-in ${
+            actionMessage.type === "success"
+              ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+              : "border-red-200 bg-red-50 text-red-800"
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            {actionMessage.type === "success" ? (
+              <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+            ) : (
+              <AlertCircle className="h-4 w-4 text-red-600 shrink-0" />
+            )}
+            <span>{actionMessage.text}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setActionMessage(null)}
+            className="text-gray-400 hover:text-gray-600"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
+
       {/* Filter Toolbar */}
-      <div className="rounded-2xl border border-[#e2ebe6] bg-[#fcfcfc] p-4 shadow-xs">
+      <div className="rounded-2xl border border-[#e2ebe6] bg-[#fcfcfc] p-4 shadow-xs space-y-3">
         <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
           {/* Search Box */}
           <div className="sm:col-span-6 relative">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#5d6f66]" />
             <Input
               type="text"
-              placeholder="Cari judul laporan, nama pelapor, atau alamat..."
+              placeholder="Cari judul laporan, ID, alamat, atau pelapor..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 text-xs h-10 bg-white"
             />
+            {searchTerm && (
+              <button
+                type="button"
+                onClick={() => setSearchTerm("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
           </div>
 
           {/* Status Filter */}
           <div className="sm:col-span-3">
             <Select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setPage(1);
+              }}
               className="text-xs h-10 bg-white"
             >
-              <option value="all">Semua Status Penanganan</option>
-              <option value="pending">Menunggu Verifikasi</option>
-              <option value="in_progress">Sedang Ditangani</option>
-              <option value="completed">Selesai Ditangani</option>
-              <option value="rejected">Ditolak</option>
+              <option value="all">Semua Status</option>
+              <option value="pending">Menunggu Verifikasi (Pending)</option>
+              <option value="in_progress">Sedang Ditangani (In Progress)</option>
+              <option value="completed">Selesai Ditangani (Completed)</option>
+              <option value="rejected">Ditolak (Rejected)</option>
             </Select>
           </div>
 
@@ -158,7 +303,10 @@ export default function AdminReportsPage() {
           <div className="sm:col-span-3">
             <Select
               value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
+              onChange={(e) => {
+                setCategoryFilter(e.target.value);
+                setPage(1);
+              }}
               className="text-xs h-10 bg-white"
             >
               <option value="all">Semua Kategori Sampah</option>
@@ -168,6 +316,86 @@ export default function AdminReportsPage() {
             </Select>
           </div>
         </div>
+
+        {/* Advanced Filters: Date Range & Sorting */}
+        {showAdvancedFilter && (
+          <div className="pt-3 border-t border-[#f0f4f2] grid grid-cols-1 sm:grid-cols-12 gap-3 animate-in fade-in">
+            {/* Date From */}
+            <div className="sm:col-span-3">
+              <Label className="text-[11px] text-gray-500 mb-1 block">Tanggal Mulai (date_from)</Label>
+              <div className="relative">
+                <Input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => {
+                    setDateFrom(e.target.value);
+                    setPage(1);
+                  }}
+                  className="text-xs h-9 bg-white"
+                />
+              </div>
+            </div>
+
+            {/* Date To */}
+            <div className="sm:col-span-3">
+              <Label className="text-[11px] text-gray-500 mb-1 block">Tanggal Akhir (date_to)</Label>
+              <div className="relative">
+                <Input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => {
+                    setDateTo(e.target.value);
+                    setPage(1);
+                  }}
+                  className="text-xs h-9 bg-white"
+                />
+              </div>
+            </div>
+
+            {/* Sort Column */}
+            <div className="sm:col-span-3">
+              <Label className="text-[11px] text-gray-500 mb-1 block">Urutkan Berdasarkan (sort_by)</Label>
+              <Select
+                value={sortBy}
+                onChange={(e) => {
+                  setSortBy(e.target.value);
+                  setPage(1);
+                }}
+                className="text-xs h-9 bg-white"
+              >
+                <option value="created_at">Tanggal Dibuat</option>
+                <option value="title">Judul Laporan</option>
+                <option value="status">Status</option>
+                <option value="waste_category">Kategori</option>
+                <option value="id">Nomor ID</option>
+              </Select>
+            </div>
+
+            {/* Sort Direction & Reset */}
+            <div className="sm:col-span-3 flex items-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setSortDirection(sortDirection === "asc" ? "desc" : "asc")}
+                className="h-9 text-xs flex-1 flex items-center justify-center gap-1.5"
+              >
+                <ArrowUpDown className="h-3.5 w-3.5" />
+                <span>{sortDirection === "asc" ? "Naik (A-Z)" : "Turun (Z-A)"}</span>
+              </Button>
+
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleResetFilters}
+                className="h-9 text-xs text-gray-500 hover:text-gray-700"
+              >
+                Reset
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Error Banner */}
@@ -203,7 +431,7 @@ export default function AdminReportsPage() {
                   <td colSpan={6} className="text-center py-12 text-[#5d6f66]">
                     <div className="flex flex-col items-center justify-center gap-2">
                       <Spinner className="size-6 text-[#259e73]" />
-                      <span>Memuat data laporan...</span>
+                      <span>Memuat data laporan dari server...</span>
                     </div>
                   </td>
                 </tr>
@@ -212,7 +440,15 @@ export default function AdminReportsPage() {
                   <td colSpan={6} className="text-center py-12 text-[#5d6f66]">
                     <AlertCircle className="h-8 w-8 text-[#c2d8cd] mx-auto mb-2" />
                     <p className="font-semibold text-[#2e4a21]">Tidak ada laporan ditemukan</p>
-                    <p className="text-xs text-[#5d6f66] mt-1">Coba ubah kata kunci pencarian atau reset filter.</p>
+                    <p className="text-xs text-[#5d6f66] mt-1">Coba sesuaikan kata kunci pencarian atau reset filter.</p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleResetFilters}
+                      className="mt-3 text-xs"
+                    >
+                      Reset Semua Filter
+                    </Button>
                   </td>
                 </tr>
               ) : (
@@ -277,8 +513,9 @@ export default function AdminReportsPage() {
                       </td>
                       <td className="px-5 py-4 whitespace-nowrap">
                         <button
+                          type="button"
                           onClick={() => handleOpenStatusModal(report)}
-                          title="Klik untuk ubah status"
+                          title="Klik untuk ubah status laporan ini"
                           className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border transition-transform hover:scale-105 cursor-pointer ${stat.bg} ${stat.text} ${stat.border}`}
                         >
                           <span className="h-1.5 w-1.5 rounded-full bg-current" />
@@ -318,14 +555,83 @@ export default function AdminReportsPage() {
           </table>
         </div>
 
-        {/* Table Footer / Summary */}
-        <div className="px-6 py-3.5 bg-[#f5f8f6] border-t border-[#e2ebe6] flex items-center justify-between text-xs text-[#5d6f66]">
-          <span>
-            Menampilkan {reports.length} {meta ? `dari total ${meta.total}` : ""} laporan
-          </span>
-          <span className="font-medium text-[#2e4a21]">
-            Halaman {meta?.current_page || 1} dari {meta?.last_page || 1}
-          </span>
+        {/* Table Footer with Pagination Controls */}
+        <div className="px-6 py-3.5 bg-[#f5f8f6] border-t border-[#e2ebe6] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#5d6f66]">
+          <div className="flex items-center gap-3">
+            <span>
+              Menampilkan {reports.length} dari total {totalItems} laporan
+            </span>
+            <div className="flex items-center gap-1">
+              <span>Per baris:</span>
+              <select
+                value={perPage}
+                onChange={(e) => {
+                  setPerPage(Number(e.target.value));
+                  setPage(1);
+                }}
+                className="rounded-md border border-[#e2ebe6] bg-white px-2 py-0.5 text-xs text-[#2e4a21] focus:outline-none"
+              >
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="font-medium text-[#2e4a21] mr-1">
+              Halaman {meta?.current_page || page} dari {totalPages}
+            </span>
+
+            <Button
+              variant="outline"
+              size="icon"
+              disabled={page <= 1 || isLoading}
+              onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+              className="h-8 w-8"
+              title="Halaman Sebelumnya"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+
+            {/* Page number buttons */}
+            {Array.from({ length: Math.min(5, totalPages) }, (_, idx) => {
+              // Calculate page window
+              let pageNum = idx + 1;
+              if (totalPages > 5 && page > 3) {
+                pageNum = page - 2 + idx;
+                if (pageNum > totalPages) pageNum = totalPages - (4 - idx);
+              }
+
+              if (pageNum < 1 || pageNum > totalPages) return null;
+
+              return (
+                <button
+                  key={pageNum}
+                  type="button"
+                  onClick={() => setPage(pageNum)}
+                  className={`h-8 w-8 rounded-lg text-xs font-semibold transition-colors ${
+                    pageNum === page
+                      ? "bg-[#259e73] text-white shadow-xs"
+                      : "text-gray-600 hover:bg-gray-100"
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              );
+            })}
+
+            <Button
+              variant="outline"
+              size="icon"
+              disabled={page >= totalPages || isLoading}
+              onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+              className="h-8 w-8"
+              title="Halaman Berikutnya"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -348,10 +654,10 @@ export default function AdminReportsPage() {
                   value={newStatus}
                   onChange={(e) => setNewStatus(e.target.value as ReportStatus)}
                 >
-                  <option value="pending">Menunggu Verifikasi</option>
-                  <option value="in_progress">Sedang Ditangani</option>
-                  <option value="completed">Selesai Ditangani</option>
-                  <option value="rejected">Tolak Laporan</option>
+                  <option value="pending">Menunggu Verifikasi (Pending)</option>
+                  <option value="in_progress">Sedang Ditangani (In Progress)</option>
+                  <option value="completed">Selesai Ditangani (Completed)</option>
+                  <option value="rejected">Tolak Laporan (Rejected)</option>
                 </Select>
               </div>
             </div>
@@ -362,7 +668,7 @@ export default function AdminReportsPage() {
                 <Textarea
                   id="statusNote"
                   rows={3}
-                  placeholder="Contoh: Petugas regu kuning telah mengangkut tumpukan sampah plastik..."
+                  placeholder="Contoh: Petugas regu kuning telah ditugaskan untuk penanganan..."
                   value={statusNote}
                   onChange={(e) => setStatusNote(e.target.value)}
                 />
@@ -370,7 +676,7 @@ export default function AdminReportsPage() {
             </div>
 
             {updateStatusMutation.error && (
-              <p className="text-xs text-red-600">
+              <p className="text-xs text-red-600 bg-red-50 p-2.5 rounded-lg border border-red-200">
                 {getApiErrorMessage(updateStatusMutation.error)}
               </p>
             )}
