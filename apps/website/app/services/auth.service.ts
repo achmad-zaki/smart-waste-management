@@ -34,6 +34,7 @@ export const authService = {
 
   async getMe(): Promise<AuthUser> {
     const response = await axiosInstance.get<ApiSuccessResponse<AuthUser>>("/auth/me");
+    authService.setCachedUser(response.data.data);
     return response.data.data;
   },
 
@@ -53,10 +54,17 @@ export const authService = {
     }
   },
 
+  setCachedUser(user: Partial<AuthUser> | AuthUser): void {
+    if (typeof window === "undefined") return;
+    const current = authService.getCachedUser();
+    const updated = current ? { ...current, ...user } : (user as AuthUser);
+    localStorage.setItem("auth_user", JSON.stringify(updated));
+  },
+
   setAuth(authData: AuthResponseData): void {
     if (typeof window === "undefined") return;
     localStorage.setItem("auth_token", authData.token);
-    localStorage.setItem("auth_user", JSON.stringify(authData.user));
+    authService.setCachedUser(authData.user);
   },
 
   clearAuth(): void {

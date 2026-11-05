@@ -86,8 +86,13 @@ export default function AdminUsersPage() {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
+  useEffect(() => {
+    setPage(1);
+  }, [roleFilter]);
+
   const { data, isLoading, isError, error, refetch, isFetching } = useAdminUsers({
     search: debouncedSearch.trim() ? debouncedSearch.trim() : undefined,
+    role: roleFilter !== "all" ? roleFilter : undefined,
     page,
     per_page: perPage,
   });
@@ -96,9 +101,7 @@ export default function AdminUsersPage() {
   const updateUserMutation = useUpdateAdminUser();
   const deleteUserMutation = useDeleteAdminUser();
 
-  const allUsers = data?.users || [];
-  // Filter by role on client side if requested
-  const users = roleFilter === "all" ? allUsers : allUsers.filter((u) => u.role === roleFilter);
+  const users = data?.users || [];
 
   const meta = data?.meta;
   const totalPages = meta?.last_page || 1;

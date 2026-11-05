@@ -28,6 +28,12 @@ class UserDashboardController extends Controller
         $completedReports = (clone $userReports)->where('status', ReportStatus::COMPLETED->value)->count();
         $rejectedReports = (clone $userReports)->where('status', ReportStatus::REJECTED->value)->count();
 
+        $reportsByCategory = [
+            'organic' => (clone $userReports)->where('waste_category', \App\Enums\WasteCategory::ORGANIC->value)->count(),
+            'plastic' => (clone $userReports)->where('waste_category', \App\Enums\WasteCategory::PLASTIC->value)->count(),
+            'paper' => (clone $userReports)->where('waste_category', \App\Enums\WasteCategory::PAPER->value)->count(),
+        ];
+
         $recentReports = (clone $userReports)
             ->latest('created_at')
             ->take(5)
@@ -39,6 +45,7 @@ class UserDashboardController extends Controller
             'in_progress_reports' => $inProgressReports,
             'completed_reports' => $completedReports,
             'rejected_reports' => $rejectedReports,
+            'reports_by_category' => $reportsByCategory,
             'recent_reports' => WasteReportResource::collection($recentReports),
         ]);
     }

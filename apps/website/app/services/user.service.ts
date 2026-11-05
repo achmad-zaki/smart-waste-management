@@ -1,4 +1,5 @@
 import { axiosInstance } from "~/lib/axios";
+import { authService } from "~/services/auth.service";
 import type {
   UserAccount,
   CreateUserData,
@@ -22,6 +23,7 @@ export const userService = {
   // --- Profile Management ---
   async getProfile(): Promise<UserAccount> {
     const response = await axiosInstance.get<ApiSuccessResponse<UserAccount>>("/profile");
+    authService.setCachedUser(response.data.data);
     return response.data.data;
   },
 
@@ -30,6 +32,7 @@ export const userService = {
       "/profile",
       data
     );
+    authService.setCachedUser(response.data.data);
     return response.data.data;
   },
 

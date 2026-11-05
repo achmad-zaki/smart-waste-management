@@ -22,6 +22,7 @@ export interface UserDashboardData {
   in_progress_reports: number;
   completed_reports: number;
   rejected_reports: number;
+  reports_by_category?: CategoryDistribution;
   recent_reports: WasteReport[];
 }
 
