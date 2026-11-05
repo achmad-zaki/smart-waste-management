@@ -130,17 +130,6 @@ export default function Home() {
               >
                 Pelajari Alur Penggunaan
               </a>
-              <Link
-                to="/admin/dashboard"
-                className={buttonVariants({
-                  variant: "forest",
-                  size: "lg",
-                  className: "w-full sm:w-auto px-5",
-                })}
-              >
-                <ShieldCheck className="h-4 w-4 text-[#acebd4]" />
-                Panel Admin
-              </Link>
             </div>
           </div>
 
@@ -533,8 +522,8 @@ export default function Home() {
                     Petugas dinas lingkungan hidup atau koordinator wilayah masuk menggunakan kredensial admin terverifikasi untuk membuka monitoring terpadu, sebaran grafik harian, dan tabel laporan masuk.
                   </p>
                   <div className="pt-2">
-                    <Link to="/admin/dashboard" className="inline-flex items-center text-xs font-semibold text-[#2e4a21] hover:underline">
-                      Akses Panel Dashboard Admin
+                    <Link to="/login" className="inline-flex items-center text-xs font-semibold text-[#2e4a21] hover:underline">
+                      Masuk ke Akun Petugas
                       <ArrowRight className="h-3 w-3 ml-1" />
                     </Link>
                   </div>
@@ -826,9 +815,6 @@ export default function Home() {
               </a>
               <Link to="/login" className="hover:text-[#259e73] transition-colors">
                 Masuk
-              </Link>
-              <Link to="/admin/dashboard" className="hover:text-[#259e73] transition-colors">
-                Panel Admin
               </Link>
             </div>
           </div>

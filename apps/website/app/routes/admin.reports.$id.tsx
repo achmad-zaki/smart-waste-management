@@ -16,7 +16,7 @@ import {
 import {
   categoryLabels,
   statusLabels,
-} from "~/lib/mock-data";
+} from "~/constants/report.constants";
 import type { ReportStatus } from "~/types/report.types";
 import { Button } from "~/components/ui/button";
 import { Spinner } from "~/components/ui/spinner";

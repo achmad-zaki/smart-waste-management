@@ -20,7 +20,7 @@ import { Textarea } from "~/components/ui/textarea";
 import {
   categoryLabels,
   statusLabels,
-} from "~/lib/mock-data";
+} from "~/constants/report.constants";
 import type { ReportStatus, WasteReport } from "~/types/report.types";
 import type { Route } from "./+types/admin.reports";
 import {
@@ -121,11 +121,6 @@ export default function AdminReportsPage() {
           >
             Segarkan Data
           </Button>
-          <Link to="/user/reports/new">
-            <Button variant="primary" size="sm" className="text-xs">
-              Buat Laporan Baru
-            </Button>
-          </Link>
         </div>
       </div>
 

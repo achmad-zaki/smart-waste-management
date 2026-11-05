@@ -1,5 +1,5 @@
-import * as React from "react"
 import { cn } from "cn"
+import * as React from "react"
 
 function Table({ className, ...props }: React.ComponentProps<"table">) {
   return (
@@ -102,12 +102,6 @@ function TableCaption({
 }
 
 export {
-  Table,
-  TableHeader,
-  TableBody,
-  TableFooter,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableCaption,
+  Table, TableBody, TableCaption, TableCell, TableFooter,
+  TableHead, TableHeader, TableRow
 }

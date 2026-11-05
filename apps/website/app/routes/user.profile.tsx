@@ -1,18 +1,27 @@
-import React, { useState, useEffect } from "react";
-import { User, Mail, Phone, Lock, Save, CheckCircle2, AlertCircle } from "lucide-react";
+import {
+  AlertCircle,
+  CheckCircle2,
+  Lock,
+  LogOut,
+  Save,
+  User,
+} from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { Link } from "react-router";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Spinner } from "~/components/ui/spinner";
-import type { Route } from "./+types/user.profile";
+import { useLogout } from "~/features/auth/hooks/use-auth";
 import {
   useProfile,
   useUpdatePassword,
   useUpdateProfile,
 } from "~/features/users/hooks/use-profile";
 import { getApiErrorMessage } from "~/lib/axios";
+import type { Route } from "./+types/user.profile";
 
-export function meta({}: Route.MetaArgs) {
+export function meta({ }: Route.MetaArgs) {
   return [
     { title: "Profil Pengguna - Smart Waste Management" },
     {
@@ -26,6 +35,7 @@ export default function UserProfilePage() {
   const { data: userProfile, isLoading, isError, error } = useProfile();
   const updateProfileMutation = useUpdateProfile();
   const updatePasswordMutation = useUpdatePassword();
+  const logoutMutation = useLogout();
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -281,6 +291,28 @@ export default function UserProfilePage() {
               )}
             </Button>
           </form>
+        </div>
+      </div>
+
+      {/* Account Actions / Opsi Sesi */}
+      <div className="rounded-2xl border border-[#e2ebe6] bg-white p-6 shadow-xs space-y-4">
+        <div>
+          <h2 className="text-base font-bold text-[#2e4a21]">Keluar Sesi Akun</h2>
+          <p className="text-xs text-[#5d6f66] mt-0.5">
+            Keluar dari sesi akun Smart Waste Anda.
+          </p>
+        </div>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-1">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => logoutMutation.mutate()}
+            disabled={logoutMutation.isPending}
+            className="border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 text-xs font-semibold cursor-pointer"
+          >
+            <LogOut className="h-4 w-4 mr-1.5 text-red-500" />
+            Keluar dari Akun
+          </Button>
         </div>
       </div>
     </div>

@@ -8,6 +8,7 @@ import {
 } from "react-router";
 
 import type { Route } from "./+types/root";
+import { NuqsAdapter } from "nuqs/adapters/react-router/v8";
 import { QueryProvider } from "./lib/query-client";
 import "./app.css";
 
@@ -45,7 +46,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <QueryProvider>
-      <Outlet />
+      <NuqsAdapter>
+        <Outlet />
+      </NuqsAdapter>
     </QueryProvider>
   );
 }

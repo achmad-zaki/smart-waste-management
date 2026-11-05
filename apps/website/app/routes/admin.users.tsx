@@ -1,33 +1,65 @@
-import React, { useState } from "react";
-import { Link } from "react-router";
 import {
-  Search,
-  UserPlus,
-  Shield,
-  User,
-  Phone,
-  Mail,
-  Calendar,
-  FileSpreadsheet,
-  ExternalLink,
-  Trash2,
   AlertCircle,
+  Calendar,
+  ExternalLink,
+  FileSpreadsheet,
+  Mail,
+  Phone,
+  Search,
+  Shield,
+  Trash2,
+  User,
+  UserPlus,
+  X,
 } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Link } from "react-router";
+import { useQueryState, parseAsString, debounce } from "nuqs";
 import { Button } from "~/components/ui/button";
-import { Spinner } from "~/components/ui/spinner";
 import { Input } from "~/components/ui/input";
-import { Modal } from "~/components/ui/modal";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from "~/components/ui/input-group";
 import { Label } from "~/components/ui/label";
+import { Modal } from "~/components/ui/modal";
 import { Select } from "~/components/ui/select";
-import type { Route } from "./+types/admin.users";
+import { Spinner } from "~/components/ui/spinner";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "~/components/ui/table";
 import {
   useAdminUsers,
   useCreateAdminUser,
   useDeleteAdminUser,
 } from "~/features/users/hooks/use-admin-users";
 import { getApiErrorMessage } from "~/lib/axios";
+import type { Route } from "./+types/admin.users";
 
-export function meta({}: Route.MetaArgs) {
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
+export function meta({ }: Route.MetaArgs) {
   return [
     { title: "Kelola Pengguna - Admin Smart Waste" },
     {
@@ -38,12 +70,21 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function AdminUsersPage() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [roleFilter, setRoleFilter] = useState("all");
+  const [searchTerm, setSearchTerm] = useQueryState(
+    "search",
+    parseAsString
+      .withDefault("")
+      .withOptions({
+        shallow: false,
+        limitUrlUpdates: debounce(350),
+        clearOnDefault: true,
+      })
+  );
+
+  const debouncedSearch = useDebounce(searchTerm, 350);
 
   const { data, isLoading, isError, error, refetch } = useAdminUsers({
-    search: searchTerm.trim() ? searchTerm.trim() : undefined,
-    role: roleFilter !== "all" ? roleFilter : undefined,
+    search: debouncedSearch.trim() ? debouncedSearch.trim() : undefined,
   });
 
   const createUserMutation = useCreateAdminUser();
@@ -110,31 +151,34 @@ export default function AdminUsersPage() {
         </Button>
       </div>
 
-      {/* Filter and Search Bar */}
+      {/* Filter: Search Only using InputGroup with clear X button */}
       <div className="rounded-2xl border border-[#e2ebe6] bg-[#fcfcfc] p-4 shadow-xs">
-        <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
-          <div className="sm:col-span-8 relative">
-            <Search className="pointer-events-none absolute left-3.5 top-3 h-4 w-4 text-[#5d6f66]" />
-            <Input
-              type="text"
-              placeholder="Cari berdasarkan nama atau email pengguna..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9"
-            />
-          </div>
-
-          <div className="sm:col-span-4">
-            <Select
-              value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value)}
-            >
-              <option value="all">Semua Peran (Role)</option>
-              <option value="admin">Administrator Dinas (DLH)</option>
-              <option value="user">Warga / Pelapor Biasa</option>
-            </Select>
-          </div>
-        </div>
+        <InputGroup className="h-10 bg-white border-[#e2ebe6] rounded-xl focus-within:border-[#259e73] focus-within:ring-2 focus-within:ring-[#259e73]/20">
+          <InputGroupAddon align="inline-start">
+            <Search className="h-4 w-4 text-[#5d6f66]" />
+          </InputGroupAddon>
+          <InputGroupInput
+            type="text"
+            placeholder="Cari berdasarkan nama atau email pengguna..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="text-xs sm:text-sm text-[#2e4a21]"
+          />
+          {searchTerm && (
+            <InputGroupAddon align="inline-end">
+              <InputGroupButton
+                size="icon-xs"
+                variant="ghost"
+                onClick={() => setSearchTerm("")}
+                title="Hapus pencarian"
+                aria-label="Clear query"
+                className="text-[#5d6f66] hover:text-[#2e4a21] hover:bg-[#f5f8f6] cursor-pointer"
+              >
+                <X className="size-3.5" />
+              </InputGroupButton>
+            </InputGroupAddon>
+          )}
+        </InputGroup>
       </div>
 
       {isError && (
@@ -149,119 +193,128 @@ export default function AdminUsersPage() {
         </div>
       )}
 
-      {/* Users Table */}
+      {/* Users Table using shadcn Table */}
       <div className="rounded-2xl border border-[#e2ebe6] bg-[#fcfcfc] overflow-hidden shadow-xs">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-[#f5f8f6] text-[#5d6f66] border-b border-[#e2ebe6]">
-              <tr>
-                <th className="px-5 py-3.5 font-semibold">Pengguna</th>
-                <th className="px-5 py-3.5 font-semibold">Kontak</th>
-                <th className="px-5 py-3.5 font-semibold">Peran (Role)</th>
-                <th className="px-5 py-3.5 font-semibold">Aktivitas Laporan</th>
-                <th className="px-5 py-3.5 font-semibold">Terdaftar</th>
-                <th className="px-5 py-3.5 font-semibold text-right">Aksi</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#f0f4f2]">
-              {isLoading ? (
-                <tr>
-                  <td colSpan={6} className="text-center py-12 text-[#5d6f66]">
-                    <div className="flex flex-col items-center justify-center gap-2">
-                      <Spinner className="size-6 text-[#259e73]" />
-                      <span>Memuat data pengguna...</span>
+        <Table>
+          <TableHeader className="bg-[#f5f8f6]">
+            <TableRow className="border-b border-[#e2ebe6] hover:bg-transparent">
+              <TableHead className="px-5 py-3.5 font-semibold text-[#5d6f66] text-xs">Pengguna</TableHead>
+              <TableHead className="px-5 py-3.5 font-semibold text-[#5d6f66] text-xs">Kontak</TableHead>
+              <TableHead className="px-5 py-3.5 font-semibold text-[#5d6f66] text-xs">Peran (Role)</TableHead>
+              <TableHead className="px-5 py-3.5 font-semibold text-[#5d6f66] text-xs">Aktivitas Laporan</TableHead>
+              <TableHead className="px-5 py-3.5 font-semibold text-[#5d6f66] text-xs">Terdaftar</TableHead>
+              <TableHead className="px-5 py-3.5 font-semibold text-[#5d6f66] text-xs text-right">Aksi</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody className="divide-y divide-[#f0f4f2] text-xs">
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-12 text-[#5d6f66]">
+                  <div className="flex flex-col items-center justify-center gap-2">
+                    <Spinner className="size-6 text-[#259e73]" />
+                    <span>Memuat data pengguna...</span>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : users.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-12 text-[#5d6f66]">
+                  Tidak ada akun pengguna yang sesuai dengan pencarian.
+                </TableCell>
+              </TableRow>
+            ) : (
+              users.map((user) => (
+                <TableRow key={user.id} className="hover:bg-[#f5f8f6]/60 transition-colors">
+                  <TableCell className="px-5 py-4 whitespace-nowrap">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold ${
+                          user.role === "admin"
+                            ? "bg-[#2e4a21] text-white"
+                            : "bg-[#acebd4] text-[#2e4a21]"
+                        }`}
+                      >
+                        {user.name
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")
+                          .substring(0, 2)
+                          .toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-[#2e4a21]">{user.name}</p>
+                        <p className="text-[11px] text-[#5d6f66]">ID: #{user.id}</p>
+                      </div>
                     </div>
-                  </td>
-                </tr>
-              ) : users.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="text-center py-12 text-[#5d6f66]">
-                    Tidak ada akun pengguna yang sesuai dengan pencarian.
-                  </td>
-                </tr>
-              ) : (
-                users.map((user) => (
-                  <tr key={user.id} className="hover:bg-[#f5f8f6]/60 transition-colors">
-                    <td className="px-5 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold ${
-                            user.role === "admin"
-                              ? "bg-[#2e4a21] text-white"
-                              : "bg-[#acebd4] text-[#2e4a21]"
-                          }`}
+                  </TableCell>
+                  <TableCell className="px-5 py-4 whitespace-nowrap">
+                    <p className="text-[#2e4a21] flex items-center gap-1.5 font-medium">
+                      <Mail className="h-3.5 w-3.5 text-[#5d6f66]" />
+                      {user.email}
+                    </p>
+                    <p className="text-[11px] text-[#5d6f66] flex items-center gap-1.5 mt-0.5">
+                      <Phone className="h-3 w-3 text-[#5d6f66]" />
+                      {user.phone || "-"}
+                    </p>
+                  </TableCell>
+                  <TableCell className="px-5 py-4 whitespace-nowrap">
+                    {user.role === "admin" ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-[#2e4a21]/10 px-2.5 py-0.5 text-[11px] font-semibold text-[#2e4a21] border border-[#2e4a21]/20">
+                        <Shield className="h-3 w-3 text-[#259e73]" />
+                        Administrator DLH
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-[#acebd4]/30 px-2.5 py-0.5 text-[11px] font-semibold text-[#259e73] border border-[#259e73]/20">
+                        <User className="h-3 w-3" />
+                        Warga Pelapor
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell className="px-5 py-4 whitespace-nowrap font-medium text-[#2e4a21]">
+                    <span className="flex items-center gap-1">
+                      <FileSpreadsheet className="h-3.5 w-3.5 text-[#259e73]" />
+                      {user.reports_count ?? 0} Laporan
+                    </span>
+                  </TableCell>
+                  <TableCell className="px-5 py-4 whitespace-nowrap text-[#5d6f66]">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="h-3 w-3 text-[#5d6f66]" />
+                      {user.created_at
+                        ? new Date(user.created_at).toLocaleDateString("id-ID")
+                        : "-"}
+                    </span>
+                  </TableCell>
+                  <TableCell className="px-5 py-4 whitespace-nowrap text-right">
+                    <div className="flex items-center justify-end gap-1.5">
+                      <Link to={`/admin/users/${user.id}`}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 px-2.5 text-xs text-[#259e73] hover:bg-[#acebd4]/20"
                         >
-                          {user.name.split(" ").map((n) => n[0]).join("").substring(0, 2).toUpperCase()}
-                        </div>
-                        <div>
-                          <p className="font-semibold text-[#2e4a21]">{user.name}</p>
-                          <p className="text-[11px] text-[#5d6f66]">ID: #{user.id}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-5 py-4 whitespace-nowrap">
-                      <p className="text-[#2e4a21] flex items-center gap-1.5 font-medium">
-                        <Mail className="h-3.5 w-3.5 text-[#5d6f66]" />
-                        {user.email}
-                      </p>
-                      <p className="text-[11px] text-[#5d6f66] flex items-center gap-1.5 mt-0.5">
-                        <Phone className="h-3 w-3 text-[#5d6f66]" />
-                        {user.phone || "-"}
-                      </p>
-                    </td>
-                    <td className="px-5 py-4 whitespace-nowrap">
-                      {user.role === "admin" ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-[#2e4a21]/10 px-2.5 py-0.5 text-[11px] font-semibold text-[#2e4a21] border border-[#2e4a21]/20">
-                          <Shield className="h-3 w-3 text-[#259e73]" />
-                          Administrator DLH
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-[#acebd4]/30 px-2.5 py-0.5 text-[11px] font-semibold text-[#259e73] border border-[#259e73]/20">
-                          <User className="h-3 w-3" />
-                          Warga Pelapor
-                        </span>
+                          Detail
+                          <ExternalLink className="h-3.5 w-3.5 ml-1" />
+                        </Button>
+                      </Link>
+                      {user.role !== "admin" && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDeleteUser(user.id)}
+                          disabled={deleteUserMutation.isPending}
+                          className="h-8 w-8 text-red-600 hover:bg-red-50 hover:text-red-700 cursor-pointer"
+                          title="Hapus Akun Pengguna"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
                       )}
-                    </td>
-                    <td className="px-5 py-4 whitespace-nowrap font-medium text-[#2e4a21]">
-                      <span className="flex items-center gap-1">
-                        <FileSpreadsheet className="h-3.5 w-3.5 text-[#259e73]" />
-                        {user.reports_count ?? 0} Laporan
-                      </span>
-                    </td>
-                    <td className="px-5 py-4 whitespace-nowrap text-[#5d6f66]">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3 text-[#5d6f66]" />
-                        {user.created_at ? new Date(user.created_at).toLocaleDateString("id-ID") : "-"}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4 whitespace-nowrap text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <Link to={`/admin/users/${user.id}`}>
-                          <Button variant="ghost" size="sm" className="h-8 px-2.5 text-xs text-[#259e73] hover:bg-[#acebd4]/20">
-                            Detail
-                            <ExternalLink className="h-3.5 w-3.5 ml-1" />
-                          </Button>
-                        </Link>
-                        {user.role !== "admin" && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDeleteUser(user.id)}
-                            disabled={deleteUserMutation.isPending}
-                            className="h-8 w-8 text-red-600 hover:bg-red-50 hover:text-red-700 cursor-pointer"
-                            title="Hapus Akun Pengguna"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
       </div>
 
       {/* Add User Modal */}

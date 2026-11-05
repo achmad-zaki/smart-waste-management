@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Link, useSearchParams } from "react-router";
 import {
   Search,
@@ -35,10 +35,17 @@ export function meta({}: Route.MetaArgs) {
 export default function UserReportsListPage() {
   const [searchParams] = useSearchParams();
   const showSuccessBanner = searchParams.get("success") === "true";
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
+
+  useEffect(() => {
+    if (searchParams.get("focus") === "search") {
+      searchInputRef.current?.focus();
+    }
+  }, [searchParams]);
 
   const { data, isLoading, isError, error, refetch } = useReports({
     status: statusFilter !== "all" ? statusFilter : undefined,
@@ -83,6 +90,7 @@ export default function UserReportsListPage() {
           <div className="sm:col-span-6 relative">
             <Search className="pointer-events-none absolute left-3.5 top-3 h-4 w-4 text-[#5d6f66]" />
             <Input
+              ref={searchInputRef}
               type="text"
               placeholder="Cari judul laporan atau alamat..."
               value={searchTerm}

@@ -1,19 +1,17 @@
+import {
+  FileSpreadsheet,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  ShieldCheck,
+  User,
+  Users,
+  X,
+} from "lucide-react";
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router";
-import {
-  LayoutDashboard,
-  FileSpreadsheet,
-  Users,
-  User,
-  ShieldCheck,
-  Menu,
-  X,
-  LogOut,
-  ArrowRightLeft,
-  Sparkles,
-} from "lucide-react";
-import { cn } from "~/lib/utils";
 import { useCurrentUser, useLogout } from "~/features/auth/hooks/use-auth";
+import { cn } from "~/lib/utils";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -129,29 +127,15 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           })}
         </nav>
 
-        {/* Switch Role Card & Logout */}
-        <div className="p-4 border-t border-[#3b5d2b] space-y-3">
-          <Link
-            to="/user/dashboard"
-            className="flex items-center justify-between rounded-xl bg-[#3b5d2b]/60 p-3.5 text-xs text-white hover:bg-[#259e73]/30 transition-colors border border-[#acebd4]/20"
-          >
-            <div className="flex items-center gap-2">
-              <ArrowRightLeft className="h-4 w-4 text-[#f2bf87]" />
-              <div>
-                <p className="font-semibold text-white">Lihat Mode Warga</p>
-                <p className="text-[11px] text-[#acebd4]">Beralih ke tampilan User</p>
-              </div>
-            </div>
-            <Sparkles className="h-4 w-4 text-[#f2bf87]" />
-          </Link>
-
-          <div className="flex items-center justify-between pt-2">
+        {/* User Profile & Logout */}
+        <div className="p-4 border-t border-[#3b5d2b]">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#259e73] text-white text-xs font-bold">
                 {userInitial}
               </div>
               <div className="text-left">
-                <p className="text-xs font-medium text-white truncate max-w-[120px]">
+                <p className="text-xs font-medium text-white truncate max-w-[130px]">
                   {displayName}
                 </p>
                 <p className="text-[10px] text-[#acebd4]">
@@ -191,22 +175,13 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <Link
-              to="/user/dashboard"
-              className="hidden sm:inline-flex items-center gap-1.5 rounded-lg border border-[#c2d8cd] bg-[#fcfcfc] px-3 py-1.5 text-xs font-medium text-[#2e4a21] hover:bg-[#acebd4]/20 transition-colors"
-            >
-              <ArrowRightLeft className="h-3.5 w-3.5 text-[#259e73]" />
-              Mode User
-            </Link>
-            <div className="flex items-center gap-2.5 pl-2 border-l border-[#e2ebe6]">
-              <div className="h-8 w-8 rounded-full bg-[#2e4a21] flex items-center justify-center text-white text-xs font-semibold">
-                {userInitial}
-              </div>
-              <span className="text-xs font-medium text-[#2e4a21] hidden md:inline">
-                {displayName}
-              </span>
+          <div className="flex items-center gap-2.5">
+            <div className="h-8 w-8 rounded-full bg-[#2e4a21] flex items-center justify-center text-white text-xs font-semibold">
+              {userInitial}
             </div>
+            <span className="text-xs font-medium text-[#2e4a21] hidden md:inline">
+              {displayName}
+            </span>
           </div>
         </header>
 

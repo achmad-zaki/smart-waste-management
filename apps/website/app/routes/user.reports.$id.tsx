@@ -12,7 +12,7 @@ import {
 import {
   categoryLabels,
   statusLabels,
-} from "~/lib/mock-data";
+} from "~/constants/report.constants";
 import { Button } from "~/components/ui/button";
 import { Spinner } from "~/components/ui/spinner";
 import type { Route } from "./+types/user.reports.$id";
