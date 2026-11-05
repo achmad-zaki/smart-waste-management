@@ -17,6 +17,7 @@ import {
   HelpCircle,
 } from "lucide-react";
 import type { Route } from "./+types/user.dashboard";
+import { ClientDate } from "~/components/common/client-date";
 import { CategoryBadge } from "~/components/common/category-badge";
 import { StatusBadge } from "~/components/common/status-badge";
 import { Button } from "~/components/ui/button";
@@ -608,21 +609,10 @@ export default function UserDashboardPage() {
                       INV_0000{report.id}
                     </td>
                     <td className="py-4 px-4 text-gray-600">
-                      {report.created_at
-                        ? new Date(report.created_at).toLocaleDateString("en-GB", {
-                            day: "2-digit",
-                            month: "short",
-                            year: "numeric",
-                          })
-                        : "17 Apr, 2026"}
+                      <ClientDate date={report.created_at} format="date" fallback="17 Apr, 2026" />
                     </td>
                     <td className="py-4 px-4 text-gray-500">
-                      {report.created_at
-                        ? new Date(report.created_at).toLocaleTimeString("en-US", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })
-                        : "03:45 PM"}
+                      <ClientDate date={report.created_at} format="time" fallback="03:45 PM" />
                     </td>
                     <td className="py-4 px-4 font-bold text-[#181d1a]">
                       $25,500

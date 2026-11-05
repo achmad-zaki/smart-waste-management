@@ -48,6 +48,7 @@ import {
 } from "~/features/users/hooks/use-admin-users";
 import { getApiErrorMessage } from "~/lib/axios";
 import type { Role, UserAccount } from "~/types/user.types";
+import { ClientDate } from "~/components/common/client-date";
 import type { Route } from "./+types/admin.users";
 
 export function meta({ }: Route.MetaArgs) {
@@ -408,9 +409,7 @@ export default function AdminUsersPage() {
                   <TableCell className="px-5 py-4 whitespace-nowrap text-[#5d6f66]">
                     <span className="flex items-center gap-1">
                       <Calendar className="h-3 w-3 text-[#5d6f66]" />
-                      {user.created_at
-                        ? new Date(user.created_at).toLocaleDateString("id-ID")
-                        : "-"}
+                      <ClientDate date={user.created_at} format="date" />
                     </span>
                   </TableCell>
                   <TableCell className="px-5 py-4 whitespace-nowrap text-right">

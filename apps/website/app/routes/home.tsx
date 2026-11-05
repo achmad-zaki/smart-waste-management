@@ -820,7 +820,7 @@ export default function Home() {
           </div>
 
           <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#475e52]">
-            <p>© {new Date().getFullYear()} Smart Waste Management System. Didukung MobileNetV2 Machine Learning.</p>
+            <p suppressHydrationWarning>© {new Date().getFullYear()} Smart Waste Management System. Didukung MobileNetV2 Machine Learning.</p>
             <p>Sistem Terpadu Antara Masyarakat dan Dinas Lingkungan Hidup.</p>
           </div>
         </div>

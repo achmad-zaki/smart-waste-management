@@ -329,10 +329,16 @@ export function UserLayout({ children }: UserLayoutProps) {
               to="/user/profile"
               className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-xl hover:bg-[#f7f9f8] transition-colors cursor-pointer"
             >
-              <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-[#107549] to-[#acebd4] flex items-center justify-center text-white text-xs font-bold shadow-2xs">
+              <div
+                suppressHydrationWarning
+                className="h-8 w-8 rounded-full bg-gradient-to-tr from-[#107549] to-[#acebd4] flex items-center justify-center text-white text-xs font-bold shadow-2xs"
+              >
                 {userInitial}
               </div>
-              <span className="text-xs font-semibold text-[#181d1a] hidden sm:block">
+              <span
+                suppressHydrationWarning
+                className="text-xs font-semibold text-[#181d1a] hidden sm:block"
+              >
                 {displayName}
               </span>
               <ChevronDown className="h-3.5 w-3.5 text-gray-400 hidden sm:block" />

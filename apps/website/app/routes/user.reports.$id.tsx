@@ -13,6 +13,7 @@ import {
   categoryLabels,
   statusLabels,
 } from "~/constants/report.constants";
+import { ClientDate } from "~/components/common/client-date";
 import { Button } from "~/components/ui/button";
 import { Spinner } from "~/components/ui/spinner";
 import type { Route } from "./+types/user.reports.$id";
@@ -162,7 +163,7 @@ export default function UserReportDetailPage() {
             </h1>
             <p className="mt-1 text-xs text-[#5d6f66] flex items-center gap-2">
               <Calendar className="h-3.5 w-3.5 text-[#259e73]" />
-              Diajukan pada {report.created_at ? new Date(report.created_at).toLocaleString("id-ID") : "-"}
+              Diajukan pada <ClientDate date={report.created_at} format="datetime" />
             </p>
           </div>
 
@@ -212,7 +213,7 @@ export default function UserReportDetailPage() {
                             {histStat.label}
                           </span>
                           <span className="text-[10px] text-[#5d6f66]">
-                            {hist.created_at ? new Date(hist.created_at).toLocaleString("id-ID") : "-"}
+                            <ClientDate date={hist.created_at} format="datetime" />
                           </span>
                         </div>
                         <p className="mt-1 text-xs text-[#5d6f66] leading-relaxed">

@@ -431,11 +431,17 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                     src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"
                     alt={displayName}
                   />
-                  <AvatarFallback className="bg-gradient-to-tr from-[#107549] to-[#acebd4] text-white font-bold text-xs">
+                  <AvatarFallback
+                    suppressHydrationWarning
+                    className="bg-gradient-to-tr from-[#107549] to-[#acebd4] text-white font-bold text-xs"
+                  >
                     {userInitial}
                   </AvatarFallback>
                 </Avatar>
-                <span className="text-xs font-semibold text-[#181d1a] hidden sm:block max-w-[120px] truncate">
+                <span
+                  suppressHydrationWarning
+                  className="text-xs font-semibold text-[#181d1a] hidden sm:block max-w-[120px] truncate"
+                >
                   {displayName}
                 </span>
                 <ChevronDown className="h-3.5 w-3.5 text-gray-400 hidden sm:block" />
@@ -446,8 +452,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 className="w-56 p-1.5 shadow-xl rounded-2xl border border-[#e5e9e7] bg-white"
               >
                 <DropdownMenuLabel className="px-3 py-2 text-xs">
-                  <p className="font-bold text-[#181d1a] truncate">{displayName}</p>
-                  <p className="text-[11px] text-gray-500 font-normal truncate">
+                  <p suppressHydrationWarning className="font-bold text-[#181d1a] truncate">
+                    {displayName}
+                  </p>
+                  <p suppressHydrationWarning className="text-[11px] text-gray-500 font-normal truncate">
                     {user?.email || "admin@smartwaste.id"}
                   </p>
                   <span className="inline-flex items-center gap-1 mt-1.5 text-[10px] font-semibold text-[#107549] bg-[#107549]/10 px-2 py-0.5 rounded-full">

@@ -28,6 +28,7 @@ import { Textarea } from "~/components/ui/textarea";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Modal } from "~/components/ui/modal";
+import { ClientDate } from "~/components/common/client-date";
 import type { Route } from "./+types/admin.reports.$id";
 import {
   useDeleteReport,
@@ -316,7 +317,7 @@ export default function AdminReportDetailPage() {
                   <div>
                     <p className="text-[#5d6f66]">Waktu Laporan</p>
                     <p className="font-semibold text-[#2e4a21]">
-                      {report.created_at ? new Date(report.created_at).toLocaleString("id-ID") : "-"}
+                      <ClientDate date={report.created_at} format="datetime" />
                     </p>
                   </div>
                 </div>
@@ -490,7 +491,7 @@ export default function AdminReportDetailPage() {
                             {histStat.label}
                           </span>
                           <span className="text-[10px] text-[#5d6f66]">
-                            {hist.created_at ? new Date(hist.created_at).toLocaleString("id-ID") : "-"}
+                            <ClientDate date={hist.created_at} format="datetime" />
                           </span>
                         </div>
                         <p className="mt-1 text-xs text-[#5d6f66] leading-relaxed">

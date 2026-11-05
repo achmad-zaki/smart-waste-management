@@ -31,6 +31,7 @@ import {
 } from "~/constants/report.constants";
 import type { ReportStatus, WasteReport } from "~/types/report.types";
 import type { Route } from "./+types/admin.reports";
+import { ClientDate } from "~/components/common/client-date";
 import {
   useDeleteReport,
   useReports,
@@ -508,7 +509,7 @@ export default function AdminReportsPage() {
                         <p className="font-medium text-[#2e4a21]">{reporterName}</p>
                         <p className="text-[11px] text-[#5d6f66] flex items-center gap-1 mt-0.5">
                           <Clock className="h-3 w-3 text-[#5d6f66]" />
-                          {report.created_at ? new Date(report.created_at).toLocaleString("id-ID") : "-"}
+                          <ClientDate date={report.created_at} format="datetime" />
                         </p>
                       </td>
                       <td className="px-5 py-4 whitespace-nowrap">

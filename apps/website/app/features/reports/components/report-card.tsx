@@ -49,7 +49,7 @@ export function ReportCard({ report, baseHref = "/user/reports" }: ReportCardPro
           <div className="flex items-center justify-between pt-1">
             <div className="flex items-center gap-1 text-[11px] text-[#5d6f66]">
               <Calendar className="h-3 w-3" />
-              <span>{formatDate(report.created_at)}</span>
+              <span suppressHydrationWarning>{formatDate(report.created_at)}</span>
             </div>
 
             <Link

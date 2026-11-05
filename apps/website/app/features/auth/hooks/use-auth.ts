@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
 import { authService } from "~/services/auth.service";
@@ -15,18 +16,30 @@ export const authKeys = {
 
 /**
  * Hook to retrieve the currently authenticated user from Laravel Sanctum.
+ * Hydration-safe: avoids reading localStorage during initial SSR/hydration render.
  */
 export function useCurrentUser() {
-  const hasToken = typeof window !== "undefined" && !!authService.getToken();
-  const cachedUser = authService.getCachedUser();
+  const [mounted, setMounted] = useState(false);
 
-  return useQuery({
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const hasToken = typeof window !== "undefined" && !!authService.getToken();
+
+  const query = useQuery({
     queryKey: authKeys.me(),
     queryFn: () => authService.getMe(),
     enabled: hasToken,
-    initialData: cachedUser || undefined,
     staleTime: 5 * 60 * 1000,
   });
+
+  const clientCachedUser = mounted ? authService.getCachedUser() : null;
+
+  return {
+    ...query,
+    data: query.data || clientCachedUser || undefined,
+  };
 }
 
 /**

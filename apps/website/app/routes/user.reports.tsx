@@ -196,7 +196,7 @@ export default function UserReportsListPage() {
 
                     <p className="text-[11px] text-[#5d6f66] flex items-center gap-1">
                       <Clock className="h-3 w-3" />
-                      <span>Diajukan: {formatDate(report.created_at)}</span>
+                      <span suppressHydrationWarning>Diajukan: {formatDate(report.created_at)}</span>
                     </p>
                   </div>
                 </div>

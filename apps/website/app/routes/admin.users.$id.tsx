@@ -20,6 +20,7 @@ import { Label } from "~/components/ui/label";
 import { Modal } from "~/components/ui/modal";
 import { Select } from "~/components/ui/select";
 import { Spinner } from "~/components/ui/spinner";
+import { ClientDate } from "~/components/common/client-date";
 import type { Route } from "./+types/admin.users.$id";
 import {
   useAdminUserDetail,
@@ -232,7 +233,7 @@ export default function AdminUserDetailPage() {
                 </span>
                 <span className="flex items-center gap-1">
                   <Calendar className="h-3.5 w-3.5 text-[#5d6f66]" />
-                  Bergabung: {user.created_at ? new Date(user.created_at).toLocaleDateString("id-ID") : "-"}
+                  Bergabung: <ClientDate date={user.created_at} format="date" />
                 </span>
               </p>
             </div>

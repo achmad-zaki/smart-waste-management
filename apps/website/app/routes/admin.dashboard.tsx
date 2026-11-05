@@ -21,6 +21,7 @@ import {
   XCircle,
 } from "lucide-react";
 import type { Route } from "./+types/admin.dashboard";
+import { ClientDate } from "~/components/common/client-date";
 import { CategoryBadge } from "~/components/common/category-badge";
 import { StatusBadge } from "~/components/common/status-badge";
 import { Button } from "~/components/ui/button";
@@ -176,7 +177,7 @@ export default function AdminDashboardPage() {
               </div>
             </div>
             <div className="mt-3">
-              <div className="text-3xl font-extrabold tracking-tight">
+              <div suppressHydrationWarning className="text-3xl font-extrabold tracking-tight">
                 {isLoading ? <Spinner className="size-6 text-white" /> : totalReports.toLocaleString("id-ID")}
               </div>
               <p className="text-[11px] text-emerald-100/80 mt-1">Seluruh laporan tercatat</p>
@@ -201,7 +202,7 @@ export default function AdminDashboardPage() {
               </div>
             </div>
             <div className="mt-3">
-              <div className="text-3xl font-extrabold tracking-tight text-amber-600">
+              <div suppressHydrationWarning className="text-3xl font-extrabold tracking-tight text-amber-600">
                 {isLoading ? <Spinner className="size-6 text-amber-600" /> : pendingReports.toLocaleString("id-ID")}
               </div>
               <p className="text-[11px] text-gray-400 mt-1">Perlu verifikasi & delegasi</p>
@@ -226,7 +227,7 @@ export default function AdminDashboardPage() {
               </div>
             </div>
             <div className="mt-3">
-              <div className="text-3xl font-extrabold tracking-tight text-blue-600">
+              <div suppressHydrationWarning className="text-3xl font-extrabold tracking-tight text-blue-600">
                 {isLoading ? <Spinner className="size-6 text-blue-600" /> : inProgressReports.toLocaleString("id-ID")}
               </div>
               <p className="text-[11px] text-gray-400 mt-1">Armada kebersihan di lapangan</p>
@@ -251,7 +252,7 @@ export default function AdminDashboardPage() {
               </div>
             </div>
             <div className="mt-3">
-              <div className="text-3xl font-extrabold tracking-tight text-emerald-600">
+              <div suppressHydrationWarning className="text-3xl font-extrabold tracking-tight text-emerald-600">
                 {isLoading ? <Spinner className="size-6 text-emerald-600" /> : completedReports.toLocaleString("id-ID")}
               </div>
               <p className="text-[11px] text-gray-400 mt-1">Lokasi bersih & tuntas</p>
@@ -301,7 +302,7 @@ export default function AdminDashboardPage() {
                     {plasticPercent}%
                   </span>
                 </div>
-                <p className="mt-3 text-2xl font-extrabold text-sky-950">
+                <p suppressHydrationWarning className="mt-3 text-2xl font-extrabold text-sky-950">
                   {plasticCount.toLocaleString("id-ID")}
                 </p>
                 <div className="mt-2.5 h-1.5 w-full rounded-full bg-sky-200 overflow-hidden">
@@ -321,7 +322,7 @@ export default function AdminDashboardPage() {
                     {organicPercent}%
                   </span>
                 </div>
-                <p className="mt-3 text-2xl font-extrabold text-emerald-950">
+                <p suppressHydrationWarning className="mt-3 text-2xl font-extrabold text-emerald-950">
                   {organicCount.toLocaleString("id-ID")}
                 </p>
                 <div className="mt-2.5 h-1.5 w-full rounded-full bg-emerald-200 overflow-hidden">
@@ -341,7 +342,7 @@ export default function AdminDashboardPage() {
                     {paperPercent}%
                   </span>
                 </div>
-                <p className="mt-3 text-2xl font-extrabold text-amber-950">
+                <p suppressHydrationWarning className="mt-3 text-2xl font-extrabold text-amber-950">
                   {paperCount.toLocaleString("id-ID")}
                 </p>
                 <div className="mt-2.5 h-1.5 w-full rounded-full bg-amber-200 overflow-hidden">
@@ -553,13 +554,7 @@ export default function AdminDashboardPage() {
                         </button>
                       </td>
                       <td className="py-3.5 px-3 whitespace-nowrap text-gray-400 text-[11px]">
-                        {report.created_at
-                          ? new Date(report.created_at).toLocaleDateString("id-ID", {
-                              day: "2-digit",
-                              month: "short",
-                              year: "numeric",
-                            })
-                          : "-"}
+                        <ClientDate date={report.created_at} format="date" />
                       </td>
                       <td className="py-3.5 px-3 text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-1.5">
