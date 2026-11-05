@@ -1,16 +1,18 @@
 import React, { useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import {
   AlertCircle,
   AlertTriangle,
   ArrowRight,
   CheckCircle2,
   Clock,
+  Edit,
   ExternalLink,
   FileSpreadsheet,
   Filter,
   Layers,
   MapPin,
+  MoreHorizontal,
   RefreshCw,
   Search,
   Shield,
@@ -30,6 +32,13 @@ import { Modal } from "~/components/ui/modal";
 import { Label } from "~/components/ui/label";
 import { Select } from "~/components/ui/select";
 import { Textarea } from "~/components/ui/textarea";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
 import { useAdminDashboard } from "~/features/dashboard/hooks/use-dashboard";
 import { useUpdateReportStatus } from "~/features/reports/hooks/use-reports";
 import { getApiErrorMessage } from "~/lib/axios";
@@ -47,6 +56,7 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function AdminDashboardPage() {
+  const navigate = useNavigate();
   const { data: dashboard, isLoading, isError, error, refetch, isFetching } = useAdminDashboard();
   const updateStatusMutation = useUpdateReportStatus();
 
@@ -467,37 +477,39 @@ export default function AdminDashboardPage() {
 
         {/* Table Display */}
         <div className="overflow-x-auto mt-2">
-          <table className="w-full text-left text-xs">
-            <thead className="text-gray-400 border-b border-gray-100 text-[11px] font-semibold">
+          <table className="w-full text-left">
+            <thead className="border-b border-gray-100 bg-white text-xs font-medium text-gray-400">
               <tr>
-                <th className="py-3 px-3">Laporan</th>
-                <th className="py-3 px-3">Kategori</th>
-                <th className="py-3 px-3">Pelapor</th>
-                <th className="py-3 px-3">Lokasi / Alamat</th>
-                <th className="py-3 px-3">Status</th>
-                <th className="py-3 px-3">Waktu</th>
-                <th className="py-3 px-3 text-right">Aksi</th>
+                <th className="px-6 py-4">ID Laporan</th>
+                <th className="px-6 py-4">Judul Laporan</th>
+                <th className="px-6 py-4">Kategori</th>
+                <th className="px-6 py-4">Waktu</th>
+                <th className="px-6 py-4">Pelapor & Lokasi</th>
+                <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4 text-right">Aksi</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50 text-[#181d1a]">
+            <tbody className="divide-y divide-gray-100/80 bg-white text-sm">
               {isLoading ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-10 text-gray-400">
-                    <Spinner className="size-6 text-[#107549] mx-auto mb-2" />
-                    <span>Memuat laporan terbaru...</span>
+                  <td colSpan={7} className="text-center py-12 text-gray-400">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <Spinner className="size-5 text-gray-400" />
+                      <span className="text-xs">Memuat laporan terbaru...</span>
+                    </div>
                   </td>
                 </tr>
               ) : recentReports.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-10 text-gray-400">
-                    <AlertCircle className="h-6 w-6 text-gray-300 mx-auto mb-1.5" />
-                    <p className="font-medium text-gray-600">Belum ada laporan sampah</p>
-                    <p className="text-[11px] mt-0.5">Laporan dari warga akan otomatis muncul di sini.</p>
+                  <td colSpan={7} className="text-center py-12 text-gray-400">
+                    <AlertCircle className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+                    <p className="font-medium text-gray-800 text-sm">Belum ada laporan sampah</p>
+                    <p className="text-xs text-gray-400 mt-1">Laporan dari warga akan otomatis muncul di sini.</p>
                   </td>
                 </tr>
               ) : filteredRecentReports.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-8 text-gray-400">
+                  <td colSpan={7} className="text-center py-10 text-gray-400 text-xs">
                     Tidak ada laporan yang sesuai dengan pencarian &quot;{searchTableQuery}&quot;
                   </td>
                 </tr>
@@ -508,75 +520,76 @@ export default function AdminDashboardPage() {
                   return (
                     <tr
                       key={report.id}
-                      className="hover:bg-[#f9faf9] transition-colors group"
+                      className="hover:bg-slate-50/50 transition-colors"
                     >
-                      <td className="py-3.5 px-3">
+                      <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900 text-sm">
+                        #{report.id}
+                      </td>
+                      <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <img
                             src={report.image_url}
                             alt={report.title}
-                            className="h-10 w-10 rounded-xl object-cover border border-gray-200 shrink-0"
+                            className="h-8 w-8 rounded-full object-cover shrink-0 ring-1 ring-gray-100"
                             loading="lazy"
                           />
-                          <div>
-                            <span className="font-bold text-[#181d1a] line-clamp-1 block">
-                              {report.title}
-                            </span>
-                            <span className="font-mono text-[10px] text-gray-400">
-                              #{report.id}
-                              {report.confidence_score
-                                ? ` • ${Math.round(report.confidence_score * 100)}% AI`
-                                : ""}
-                            </span>
-                          </div>
+                          <span
+                            className="font-medium text-gray-900 text-sm line-clamp-1 max-w-[200px]"
+                            title={report.title}
+                          >
+                            {report.title}
+                          </span>
                         </div>
                       </td>
-                      <td className="py-3.5 px-3 whitespace-nowrap">
-                        <CategoryBadge category={report.waste_category} />
+                      <td className="px-6 py-4 whitespace-nowrap text-gray-700 text-sm font-normal capitalize">
+                        {report.waste_category}
                       </td>
-                      <td className="py-3.5 px-3 whitespace-nowrap font-medium text-gray-700">
-                        {reporter}
+                      <td className="px-6 py-4 whitespace-nowrap text-gray-700 text-sm font-normal">
+                        <ClientDate date={report.created_at} format="date" />
                       </td>
-                      <td className="py-3.5 px-3 max-w-[200px]">
-                        <span className="text-gray-500 line-clamp-1 flex items-center gap-1">
-                          <MapPin className="h-3 w-3 text-[#107549] shrink-0" />
-                          <span>{report.address || "Area Pelaporan"}</span>
-                        </span>
+                      <td className="px-6 py-4">
+                        <div className="max-w-[200px]">
+                          <p className="text-gray-700 text-sm font-normal truncate">{reporter}</p>
+                          <p className="text-[11px] text-gray-400 truncate mt-0.5">
+                            {report.address || "Area Pelaporan"}
+                          </p>
+                        </div>
                       </td>
-                      <td className="py-3.5 px-3 whitespace-nowrap">
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <button
                           type="button"
                           onClick={() => handleOpenStatusModal(report)}
                           title="Klik untuk ubah status"
-                          className="cursor-pointer transition-transform hover:scale-105"
+                          className="cursor-pointer transition-transform hover:scale-[1.02]"
                         >
-                          <StatusBadge status={report.status} />
+                          <StatusBadge status={report.status} variant="elegant" />
                         </button>
                       </td>
-                      <td className="py-3.5 px-3 whitespace-nowrap text-gray-400 text-[11px]">
-                        <ClientDate date={report.created_at} format="date" />
-                      </td>
-                      <td className="py-3.5 px-3 text-right whitespace-nowrap">
-                        <div className="flex items-center justify-end gap-1.5">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleOpenStatusModal(report)}
-                            className="h-7 px-2 text-[11px] font-semibold text-gray-600 hover:text-[#107549]"
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-gray-700 hover:text-gray-900 hover:bg-gray-100 transition-colors cursor-pointer outline-none">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent
+                            align="end"
+                            className="w-44 p-1 rounded-xl shadow-lg border border-gray-100 bg-white"
                           >
-                            Ubah Status
-                          </Button>
-                          <Link to={`/admin/reports/${report.id}`}>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 px-2 text-[11px] font-semibold text-[#107549] hover:bg-emerald-50"
+                            <DropdownMenuItem
+                              className="cursor-pointer text-xs py-2"
+                              onClick={() => navigate(`/admin/reports/${report.id}`)}
                             >
-                              Detail
-                              <ExternalLink className="h-3 w-3 ml-1" />
-                            </Button>
-                          </Link>
-                        </div>
+                              <ExternalLink className="h-3.5 w-3.5 mr-2 text-gray-400" />
+                              <span>Lihat Detail</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="cursor-pointer text-xs py-2"
+                              onClick={() => handleOpenStatusModal(report)}
+                            >
+                              <Edit className="h-3.5 w-3.5 mr-2 text-gray-400" />
+                              <span>Ubah Status</span>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </td>
                     </tr>
                   );

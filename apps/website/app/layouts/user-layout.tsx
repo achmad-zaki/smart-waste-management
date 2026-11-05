@@ -16,10 +16,21 @@ import {
   Bell,
   ChevronDown,
   Sparkles,
+  Settings,
 } from "lucide-react";
 import { cn } from "~/lib/utils";
 import { useCurrentUser, useLogout } from "~/features/auth/hooks/use-auth";
 import { useUserDashboard } from "~/features/dashboard/hooks/use-dashboard";
+import { Button } from "~/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
 
 interface UserLayoutProps {
   children: React.ReactNode;
@@ -88,15 +99,6 @@ export function UserLayout({ children }: UserLayoutProps) {
     },
   ];
 
-  const accountItems = [
-    {
-      name: "Profil Akun",
-      href: "/user/profile",
-      icon: User,
-      active: location.pathname.startsWith("/user/profile"),
-    },
-  ];
-
   // Mobile navigation active states
   const isDashboardActive =
     location.pathname === "/user/dashboard" || location.pathname === "/user";
@@ -113,8 +115,8 @@ export function UserLayout({ children }: UserLayoutProps) {
 
   return (
     <div className="flex min-h-screen bg-[#f3f4f6] text-[#181d1a]">
-      {/* Desktop Sidebar (Only visible on lg screens and up) */}
-      <aside className="hidden lg:flex w-68 flex-col border-r border-[#e5e9e7] bg-white text-[#181d1a] shrink-0 min-h-screen">
+      {/* Desktop Sidebar (Fixed on viewport for lg screens) */}
+      <aside className="hidden lg:flex fixed inset-y-0 left-0 z-40 w-68 flex-col border-r border-[#e5e9e7] bg-white text-[#181d1a] shrink-0">
         {/* Brand Header */}
         <div className="flex h-18 items-center justify-between px-6 border-b border-[#f0f3f1]">
           <Link to="/user/dashboard" className="flex items-center gap-3 group">
@@ -197,48 +199,6 @@ export function UserLayout({ children }: UserLayoutProps) {
               })}
             </div>
           </div>
-
-          {/* Pengaturan Akun */}
-          <div>
-            <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-gray-400">
-              Pengaturan Akun
-            </div>
-            <div className="space-y-1">
-              {accountItems.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <Link
-                    key={item.name}
-                    to={item.href}
-                    className={cn(
-                      "flex items-center justify-between rounded-xl px-3.5 py-2.5 font-medium transition-all duration-150",
-                      item.active
-                        ? "bg-[#181d1a] text-white shadow-xs"
-                        : "text-gray-600 hover:bg-[#f3f6f4] hover:text-[#181d1a]"
-                    )}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Icon
-                        className={cn(
-                          "h-4 w-4 shrink-0",
-                          item.active ? "text-white" : "text-gray-500"
-                        )}
-                      />
-                      <span>{item.name}</span>
-                    </div>
-                  </Link>
-                );
-              })}
-              <button
-                onClick={() => logoutMutation.mutate()}
-                disabled={logoutMutation.isPending}
-                className="w-full flex items-center gap-3 rounded-xl px-3.5 py-2.5 font-medium text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors text-left cursor-pointer"
-              >
-                <LogOut className="h-4 w-4 text-gray-500 shrink-0" />
-                <span>Keluar Akun</span>
-              </button>
-            </div>
-          </div>
         </nav>
 
         {/* AI Camera Assistant Banner Card */}
@@ -264,10 +224,10 @@ export function UserLayout({ children }: UserLayoutProps) {
         </div>
       </aside>
 
-      {/* Main Content Area */}
-      <div className="flex flex-1 flex-col min-w-0 overflow-x-hidden">
-        {/* Top Header Navbar */}
-        <header className="sticky top-0 z-30 flex h-16 sm:h-18 items-center justify-between border-b border-[#e5e9e7] bg-white px-4 sm:px-8">
+      {/* Main Content Area - padded on left for fixed sidebar on desktop */}
+      <div className="flex flex-1 flex-col min-w-0 lg:pl-68">
+        {/* Top Header Navbar - Fixed / Sticky at top */}
+        <header className="sticky top-0 z-30 flex h-18 items-center justify-between border-b border-[#e5e9e7] bg-white/95 backdrop-blur-md px-4 sm:px-8 shrink-0">
           <div className="flex items-center gap-3">
             {/* Mobile Brand Logo */}
             <Link
@@ -324,25 +284,71 @@ export function UserLayout({ children }: UserLayoutProps) {
               ) : null}
             </Link>
 
-            {/* User Profile Pill */}
-            <Link
-              to="/user/profile"
-              className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-xl hover:bg-[#f7f9f8] transition-colors cursor-pointer"
-            >
-              <div
-                suppressHydrationWarning
-                className="h-8 w-8 rounded-full bg-gradient-to-tr from-[#107549] to-[#acebd4] flex items-center justify-center text-white text-xs font-bold shadow-2xs"
+            {/* User Profile Avatar Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    className="flex items-center gap-2 h-auto py-1 pl-1 pr-2 rounded-xl hover:bg-[#f7f9f8] transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#107549] text-foreground font-normal"
+                  >
+                    <div
+                      suppressHydrationWarning
+                      className="h-8 w-8 rounded-full bg-gradient-to-tr from-[#107549] to-[#acebd4] flex items-center justify-center text-white text-xs font-bold shadow-2xs"
+                    >
+                      {userInitial}
+                    </div>
+                    <span
+                      suppressHydrationWarning
+                      className="text-xs font-semibold text-[#181d1a] hidden sm:block max-w-[120px] truncate"
+                    >
+                      {displayName}
+                    </span>
+                    <ChevronDown className="h-3.5 w-3.5 text-gray-400 hidden sm:block shrink-0" />
+                  </Button>
+                }
+              />
+              <DropdownMenuContent
+                align="end"
+                sideOffset={8}
+                className="w-56 p-1.5 shadow-xl rounded-2xl border border-[#e5e9e7] bg-white"
               >
-                {userInitial}
-              </div>
-              <span
-                suppressHydrationWarning
-                className="text-xs font-semibold text-[#181d1a] hidden sm:block"
-              >
-                {displayName}
-              </span>
-              <ChevronDown className="h-3.5 w-3.5 text-gray-400 hidden sm:block" />
-            </Link>
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel className="px-3 py-2 text-xs">
+                    <p suppressHydrationWarning className="font-bold text-[#181d1a] truncate">
+                      {displayName}
+                    </p>
+                    <p suppressHydrationWarning className="text-[11px] text-gray-500 font-normal truncate">
+                      {user?.email || "warga@smartwaste.id"}
+                    </p>
+                    <span className="inline-flex items-center gap-1 mt-1.5 text-[10px] font-semibold text-[#107549] bg-[#107549]/10 px-2 py-0.5 rounded-full">
+                      <span className="h-1.5 w-1.5 rounded-full bg-[#107549]" />
+                      Warga Pelapor
+                    </span>
+                  </DropdownMenuLabel>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator className="my-1 bg-[#f0f3f1]" />
+                <DropdownMenuGroup>
+                  <DropdownMenuItem
+                    onClick={() => navigate("/user/profile")}
+                    className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-gray-700 hover:text-[#181d1a] hover:bg-[#f4f7f5] rounded-xl cursor-pointer"
+                  >
+                    <Settings className="h-4 w-4 text-gray-500" />
+                    <span>Pengaturan Akun</span>
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator className="my-1 bg-[#f0f3f1]" />
+                <DropdownMenuItem
+                  variant="destructive"
+                  onClick={() => logoutMutation.mutate()}
+                  disabled={logoutMutation.isPending}
+                  className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-xl cursor-pointer focus:bg-red-50 focus:text-red-700"
+                >
+                  <LogOut className="h-4 w-4 text-red-500" />
+                  <span>Keluar Akun</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             <Link to="/user/reports/new">
               <button className="flex items-center gap-1.5 rounded-xl bg-[#107549] hover:bg-[#0c5c36] text-white px-3.5 py-2 text-xs font-semibold shadow-xs transition-colors cursor-pointer">

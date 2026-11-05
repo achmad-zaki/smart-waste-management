@@ -617,25 +617,8 @@ export default function UserDashboardPage() {
                     <td className="py-4 px-4 font-bold text-[#181d1a]">
                       $25,500
                     </td>
-                    <td className="py-4 px-4">
-                      <span
-                        className={cn(
-                          "inline-flex items-center gap-1.5 font-medium text-[11px]",
-                          report.status === "completed"
-                            ? "text-emerald-700"
-                            : "text-amber-700"
-                        )}
-                      >
-                        <span
-                          className={cn(
-                            "h-1.5 w-1.5 rounded-full",
-                            report.status === "completed"
-                              ? "bg-emerald-500"
-                              : "bg-amber-500"
-                          )}
-                        />
-                        {report.status === "completed" ? "Completed" : "Pending"}
-                      </span>
+                    <td className="py-4 px-4 whitespace-nowrap">
+                      <StatusBadge status={report.status} variant="elegant" />
                     </td>
                     <td className="py-4 px-3 text-right">
                       <Link to={`/user/reports/${report.id}`}>

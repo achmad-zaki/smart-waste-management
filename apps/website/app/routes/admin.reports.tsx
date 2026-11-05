@@ -1,45 +1,49 @@
 import {
   AlertCircle,
   ArrowUpDown,
-  Calendar,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
-  Clock,
   Edit,
   ExternalLink,
   Filter,
-  MapPin,
+  MoreHorizontal,
   RefreshCw,
   Search,
-  Sparkles,
   Trash2,
-  X,
+  X
 } from "lucide-react";
-import React, { useState, useEffect } from "react";
-import { Link, useSearchParams } from "react-router";
+import React, { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router";
+import { ClientDate } from "~/components/common/client-date";
+import { StatusBadge } from "~/components/common/status-badge";
 import { Button } from "~/components/ui/button";
-import { Spinner } from "~/components/ui/spinner";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Modal } from "~/components/ui/modal";
 import { Select } from "~/components/ui/select";
+import { Spinner } from "~/components/ui/spinner";
 import { Textarea } from "~/components/ui/textarea";
 import {
-  categoryLabels,
-  statusLabels,
+  categoryLabels
 } from "~/constants/report.constants";
-import type { ReportStatus, WasteReport } from "~/types/report.types";
-import type { Route } from "./+types/admin.reports";
-import { ClientDate } from "~/components/common/client-date";
 import {
   useDeleteReport,
   useReports,
   useUpdateReportStatus,
 } from "~/features/reports/hooks/use-reports";
 import { getApiErrorMessage } from "~/lib/axios";
+import type { ReportStatus, WasteReport } from "~/types/report.types";
+import type { Route } from "./+types/admin.reports";
 
-export function meta({}: Route.MetaArgs) {
+export function meta({ }: Route.MetaArgs) {
   return [
     { title: "Kelola Laporan Sampah - Admin Smart Waste" },
     {
@@ -50,6 +54,7 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function AdminReportsPage() {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
   // URL Query Sync
@@ -234,11 +239,10 @@ export default function AdminReportsPage() {
       {/* Action Notification Alert */}
       {actionMessage && (
         <div
-          className={`rounded-xl border p-4 flex items-center justify-between text-xs font-medium animate-in fade-in ${
-            actionMessage.type === "success"
+          className={`rounded-xl border p-4 flex items-center justify-between text-xs font-medium animate-in fade-in ${actionMessage.type === "success"
               ? "border-emerald-200 bg-emerald-50 text-emerald-800"
               : "border-red-200 bg-red-50 text-red-800"
-          }`}
+            }`}
         >
           <div className="flex items-center gap-2">
             {actionMessage.type === "success" ? (
@@ -413,35 +417,36 @@ export default function AdminReportsPage() {
       )}
 
       {/* Reports Table Container */}
-      <div className="rounded-2xl border border-[#e2ebe6] bg-[#fcfcfc] overflow-hidden shadow-xs">
+      <div className="rounded-2xl border border-gray-100 bg-white overflow-hidden shadow-xs">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-[#f5f8f6] text-[#5d6f66] border-b border-[#e2ebe6]">
+          <table className="w-full text-left">
+            <thead className="border-b border-gray-100 bg-white text-xs font-medium text-gray-400">
               <tr>
-                <th className="px-5 py-3.5 font-semibold">Foto & ID</th>
-                <th className="px-5 py-3.5 font-semibold">Judul & Lokasi</th>
-                <th className="px-5 py-3.5 font-semibold">Kategori AI</th>
-                <th className="px-5 py-3.5 font-semibold">Pelapor & Tanggal</th>
-                <th className="px-5 py-3.5 font-semibold">Status Penanganan</th>
-                <th className="px-5 py-3.5 font-semibold text-right">Aksi</th>
+                <th className="px-6 py-4">ID Laporan</th>
+                <th className="px-6 py-4">Judul Laporan</th>
+                <th className="px-6 py-4">Kategori</th>
+                <th className="px-6 py-4">Waktu</th>
+                <th className="px-6 py-4">Pelapor & Lokasi</th>
+                <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4 text-right">Aksi</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#f0f4f2]">
+            <tbody className="divide-y divide-gray-100/80 bg-white text-sm">
               {isLoading ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-12 text-[#5d6f66]">
+                  <td colSpan={7} className="text-center py-12 text-gray-400">
                     <div className="flex flex-col items-center justify-center gap-2">
-                      <Spinner className="size-6 text-[#259e73]" />
-                      <span>Memuat data laporan dari server...</span>
+                      <Spinner className="size-5 text-gray-400" />
+                      <span className="text-xs">Memuat data laporan dari server...</span>
                     </div>
                   </td>
                 </tr>
               ) : reports.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-12 text-[#5d6f66]">
-                    <AlertCircle className="h-8 w-8 text-[#c2d8cd] mx-auto mb-2" />
-                    <p className="font-semibold text-[#2e4a21]">Tidak ada laporan ditemukan</p>
-                    <p className="text-xs text-[#5d6f66] mt-1">Coba sesuaikan kata kunci pencarian atau reset filter.</p>
+                  <td colSpan={7} className="text-center py-12 text-gray-400">
+                    <AlertCircle className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+                    <p className="font-medium text-gray-800 text-sm">Tidak ada laporan ditemukan</p>
+                    <p className="text-xs text-gray-400 mt-1">Coba sesuaikan kata kunci pencarian atau reset filter.</p>
                     <Button
                       size="sm"
                       variant="outline"
@@ -456,97 +461,88 @@ export default function AdminReportsPage() {
                 reports.map((report) => {
                   const cat = categoryLabels[report.waste_category] || {
                     label: report.waste_category,
-                    badgeClass: "bg-gray-100 text-gray-800",
-                  };
-                  const stat = statusLabels[report.status] || {
-                    label: report.status,
-                    bg: "bg-gray-100",
-                    text: "text-gray-800",
-                    border: "border-gray-200",
                   };
                   const reporterName = report.user?.name || report.user_name || "Warga";
 
                   return (
-                    <tr key={report.id} className="hover:bg-[#f5f8f6]/60 transition-colors">
-                      <td className="px-5 py-4 whitespace-nowrap">
+                    <tr key={report.id} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900 text-sm">
+                        #{report.id}
+                      </td>
+                      <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <img
                             src={report.image_url}
                             alt={report.title}
-                            className="h-12 w-12 rounded-lg object-cover border border-[#e2ebe6] shrink-0"
+                            className="h-8 w-8 rounded-full object-cover shrink-0 ring-1 ring-gray-100"
                             loading="lazy"
                           />
-                          <div>
-                            <span className="font-mono text-xs font-bold text-[#2e4a21]">
-                              #{report.id}
-                            </span>
-                            <p className="text-[10px] text-[#5d6f66]">
-                              {report.confidence_score
-                                ? `${Math.round(report.confidence_score * 100)}% conf.`
-                                : "-"}
-                            </p>
-                          </div>
+                          <span
+                            className="font-medium text-gray-900 text-sm line-clamp-1 max-w-[220px]"
+                            title={report.title}
+                          >
+                            {report.title}
+                          </span>
                         </div>
                       </td>
-                      <td className="px-5 py-4 max-w-xs">
-                        <p className="font-semibold text-[#2e4a21] line-clamp-1">
-                          {report.title}
-                        </p>
-                        <p className="text-[11px] text-[#5d6f66] flex items-center gap-1 mt-0.5 line-clamp-1">
-                          <MapPin className="h-3 w-3 text-[#259e73] shrink-0" />
-                          <span>{report.address || "Koordinat GPS"}</span>
-                        </p>
+                      <td className="px-6 py-4 whitespace-nowrap text-gray-700 text-sm font-normal">
+                        {cat.label}
                       </td>
-                      <td className="px-5 py-4 whitespace-nowrap">
-                        <span
-                          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${cat.badgeClass}`}
-                        >
-                          <Sparkles className="h-3 w-3" />
-                          {cat.label}
-                        </span>
+                      <td className="px-6 py-4 whitespace-nowrap text-gray-700 text-sm font-normal">
+                        <ClientDate date={report.created_at} format="datetime" />
                       </td>
-                      <td className="px-5 py-4 whitespace-nowrap">
-                        <p className="font-medium text-[#2e4a21]">{reporterName}</p>
-                        <p className="text-[11px] text-[#5d6f66] flex items-center gap-1 mt-0.5">
-                          <Clock className="h-3 w-3 text-[#5d6f66]" />
-                          <ClientDate date={report.created_at} format="datetime" />
-                        </p>
+                      <td className="px-6 py-4">
+                        <div className="max-w-[200px]">
+                          <p className="text-gray-700 text-sm font-normal truncate">{reporterName}</p>
+                          <p className="text-[11px] text-gray-400 truncate mt-0.5">
+                            {report.address || "Area Pelaporan"}
+                          </p>
+                        </div>
                       </td>
-                      <td className="px-5 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <button
                           type="button"
                           onClick={() => handleOpenStatusModal(report)}
-                          title="Klik untuk ubah status laporan ini"
-                          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border transition-transform hover:scale-105 cursor-pointer ${stat.bg} ${stat.text} ${stat.border}`}
+                          title="Klik untuk ubah status laporan"
+                          className="cursor-pointer transition-transform hover:scale-[1.02]"
                         >
-                          <span className="h-1.5 w-1.5 rounded-full bg-current" />
-                          {stat.label}
-                          <Edit className="h-3 w-3 ml-1 opacity-70" />
+                          <StatusBadge status={report.status} variant="elegant" />
                         </button>
                       </td>
-                      <td className="px-5 py-4 whitespace-nowrap text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          <Link to={`/admin/reports/${report.id}`}>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 px-2.5 text-xs text-[#259e73] hover:bg-[#acebd4]/20"
-                            >
-                              Detail
-                              <ExternalLink className="h-3.5 w-3.5 ml-1" />
-                            </Button>
-                          </Link>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDelete(report.id)}
-                            disabled={deleteMutation.isPending}
-                            className="h-8 w-8 text-red-600 hover:bg-red-50 hover:text-red-700 cursor-pointer"
-                            title="Hapus Laporan"
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-gray-700 hover:text-gray-900 hover:bg-gray-100 transition-colors cursor-pointer outline-none">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent
+                            align="end"
+                            className="w-44 p-1 rounded-xl shadow-lg border border-gray-100 bg-white"
                           >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        </div>
+                            <DropdownMenuItem
+                              className="cursor-pointer text-xs py-2"
+                              onClick={() => navigate(`/admin/reports/${report.id}`)}
+                            >
+                              <ExternalLink className="h-3.5 w-3.5 mr-2 text-gray-400" />
+                              <span>Lihat Detail</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="cursor-pointer text-xs py-2"
+                              onClick={() => handleOpenStatusModal(report)}
+                            >
+                              <Edit className="h-3.5 w-3.5 mr-2 text-gray-400" />
+                              <span>Ubah Status</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator className="my-1 bg-gray-100" />
+                            <DropdownMenuItem
+                              variant="destructive"
+                              className="cursor-pointer text-xs py-2 text-red-600 hover:text-red-700 focus:bg-red-50"
+                              onClick={() => handleDelete(report.id)}
+                            >
+                              <Trash2 className="h-3.5 w-3.5 mr-2 text-red-600" />
+                              <span>Hapus Laporan</span>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </td>
                     </tr>
                   );
@@ -557,20 +553,20 @@ export default function AdminReportsPage() {
         </div>
 
         {/* Table Footer with Pagination Controls */}
-        <div className="px-6 py-3.5 bg-[#f5f8f6] border-t border-[#e2ebe6] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#5d6f66]">
+        <div className="px-6 py-4 bg-white border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-500">
           <div className="flex items-center gap-3">
             <span>
               Menampilkan {reports.length} dari total {totalItems} laporan
             </span>
-            <div className="flex items-center gap-1">
-              <span>Per baris:</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-gray-400">Per baris:</span>
               <select
                 value={perPage}
                 onChange={(e) => {
                   setPerPage(Number(e.target.value));
                   setPage(1);
                 }}
-                className="rounded-md border border-[#e2ebe6] bg-white px-2 py-0.5 text-xs text-[#2e4a21] focus:outline-none"
+                className="rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs text-gray-700 focus:outline-none focus:ring-1 focus:ring-gray-300"
               >
                 <option value={10}>10</option>
                 <option value={25}>25</option>
@@ -611,11 +607,10 @@ export default function AdminReportsPage() {
                   key={pageNum}
                   type="button"
                   onClick={() => setPage(pageNum)}
-                  className={`h-8 w-8 rounded-lg text-xs font-semibold transition-colors ${
-                    pageNum === page
+                  className={`h-8 w-8 rounded-lg text-xs font-semibold transition-colors ${pageNum === page
                       ? "bg-[#259e73] text-white shadow-xs"
                       : "text-gray-600 hover:bg-gray-100"
-                  }`}
+                    }`}
                 >
                   {pageNum}
                 </button>

@@ -8,6 +8,7 @@ import {
   ExternalLink,
   FileSpreadsheet,
   Mail,
+  MoreHorizontal,
   Phone,
   RefreshCw,
   Search,
@@ -19,7 +20,7 @@ import {
   X,
 } from "lucide-react";
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import {
@@ -40,6 +41,13 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
 import {
   useAdminUsers,
   useCreateAdminUser,
@@ -62,6 +70,7 @@ export function meta({ }: Route.MetaArgs) {
 }
 
 export default function AdminUsersPage() {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<"all" | "admin" | "user">("all");
@@ -324,44 +333,50 @@ export default function AdminUsersPage() {
       )}
 
       {/* Users Table */}
-      <div className="rounded-2xl border border-[#e2ebe6] bg-[#fcfcfc] overflow-hidden shadow-xs">
+      <div className="rounded-2xl border border-gray-100 bg-white overflow-hidden shadow-xs">
         <Table>
-          <TableHeader className="bg-[#f5f8f6]">
-            <TableRow className="border-b border-[#e2ebe6] hover:bg-transparent">
-              <TableHead className="px-5 py-3.5 font-semibold text-[#5d6f66] text-xs">Pengguna</TableHead>
-              <TableHead className="px-5 py-3.5 font-semibold text-[#5d6f66] text-xs">Kontak</TableHead>
-              <TableHead className="px-5 py-3.5 font-semibold text-[#5d6f66] text-xs">Peran (Role)</TableHead>
-              <TableHead className="px-5 py-3.5 font-semibold text-[#5d6f66] text-xs">Aktivitas Laporan</TableHead>
-              <TableHead className="px-5 py-3.5 font-semibold text-[#5d6f66] text-xs">Terdaftar</TableHead>
-              <TableHead className="px-5 py-3.5 font-semibold text-[#5d6f66] text-xs text-right">Aksi</TableHead>
+          <TableHeader className="bg-white border-b border-gray-100">
+            <TableRow className="border-b border-gray-100 hover:bg-transparent">
+              <TableHead className="px-6 py-4 font-medium text-gray-400 text-xs">User ID</TableHead>
+              <TableHead className="px-6 py-4 font-medium text-gray-400 text-xs">Nama Pengguna</TableHead>
+              <TableHead className="px-6 py-4 font-medium text-gray-400 text-xs">Email</TableHead>
+              <TableHead className="px-6 py-4 font-medium text-gray-400 text-xs">Nomor Telepon</TableHead>
+              <TableHead className="px-6 py-4 font-medium text-gray-400 text-xs">Peran</TableHead>
+              <TableHead className="px-6 py-4 font-medium text-gray-400 text-xs">Laporan</TableHead>
+              <TableHead className="px-6 py-4 font-medium text-gray-400 text-xs">Terdaftar</TableHead>
+              <TableHead className="px-6 py-4 font-medium text-gray-400 text-xs text-right">Aksi</TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody className="divide-y divide-[#f0f4f2] text-xs">
+          <TableBody className="divide-y divide-gray-100/80 bg-white text-sm">
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-12 text-[#5d6f66]">
+                <TableCell colSpan={8} className="text-center py-12 text-gray-400">
                   <div className="flex flex-col items-center justify-center gap-2">
-                    <Spinner className="size-6 text-[#259e73]" />
-                    <span>Memuat data pengguna...</span>
+                    <Spinner className="size-5 text-gray-400" />
+                    <span className="text-xs">Memuat data pengguna...</span>
                   </div>
                 </TableCell>
               </TableRow>
             ) : users.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-12 text-[#5d6f66]">
-                  Tidak ada akun pengguna yang sesuai dengan kriteria pencarian.
+                <TableCell colSpan={8} className="text-center py-12 text-gray-400">
+                  <p className="font-medium text-gray-800 text-sm">Tidak ada pengguna ditemukan</p>
+                  <p className="text-xs text-gray-400 mt-1">Coba sesuaikan kata kunci pencarian atau filter.</p>
                 </TableCell>
               </TableRow>
             ) : (
               users.map((user) => (
-                <TableRow key={user.id} className="hover:bg-[#f5f8f6]/60 transition-colors">
-                  <TableCell className="px-5 py-4 whitespace-nowrap">
+                <TableRow key={user.id} className="hover:bg-slate-50/50 transition-colors">
+                  <TableCell className="px-6 py-4 whitespace-nowrap font-medium text-gray-900 text-sm">
+                    #{user.id}
+                  </TableCell>
+                  <TableCell className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-3">
                       <div
-                        className={`flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold ${
+                        className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold shrink-0 ${
                           user.role === "admin"
-                            ? "bg-[#2e4a21] text-white"
-                            : "bg-[#acebd4] text-[#2e4a21]"
+                            ? "bg-emerald-100 text-emerald-800"
+                            : "bg-slate-100 text-slate-700"
                         }`}
                       >
                         {user.name
@@ -371,83 +386,66 @@ export default function AdminUsersPage() {
                           .substring(0, 2)
                           .toUpperCase()}
                       </div>
-                      <div>
-                        <p className="font-semibold text-[#2e4a21]">{user.name}</p>
-                        <p className="text-[11px] text-[#5d6f66]">ID: #{user.id}</p>
-                      </div>
+                      <span className="font-medium text-gray-900 text-sm">{user.name}</span>
                     </div>
                   </TableCell>
-                  <TableCell className="px-5 py-4 whitespace-nowrap">
-                    <p className="text-[#2e4a21] flex items-center gap-1.5 font-medium">
-                      <Mail className="h-3.5 w-3.5 text-[#5d6f66]" />
-                      {user.email}
-                    </p>
-                    <p className="text-[11px] text-[#5d6f66] flex items-center gap-1.5 mt-0.5">
-                      <Phone className="h-3 w-3 text-[#5d6f66]" />
-                      {user.phone || "-"}
-                    </p>
+                  <TableCell className="px-6 py-4 whitespace-nowrap text-gray-700 text-sm font-normal">
+                    {user.email}
                   </TableCell>
-                  <TableCell className="px-5 py-4 whitespace-nowrap">
+                  <TableCell className="px-6 py-4 whitespace-nowrap text-gray-700 text-sm font-normal">
+                    {user.phone || "-"}
+                  </TableCell>
+                  <TableCell className="px-6 py-4 whitespace-nowrap">
                     {user.role === "admin" ? (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-[#2e4a21]/10 px-2.5 py-0.5 text-[11px] font-semibold text-[#2e4a21] border border-[#2e4a21]/20">
-                        <Shield className="h-3 w-3 text-[#259e73]" />
-                        Administrator DLH
+                      <span className="inline-flex items-center justify-center rounded-lg px-3 py-1 text-xs font-medium bg-[#ecfdf5] text-[#10b981] border border-[#a7f3d0]">
+                        Admin DLH
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-[#acebd4]/30 px-2.5 py-0.5 text-[11px] font-semibold text-[#259e73] border border-[#259e73]/20">
-                        <User className="h-3 w-3" />
-                        Warga Pelapor
+                      <span className="inline-flex items-center justify-center rounded-lg px-3 py-1 text-xs font-medium bg-[#f0f9ff] text-[#0284c7] border border-[#bae6fd]">
+                        Warga
                       </span>
                     )}
                   </TableCell>
-                  <TableCell className="px-5 py-4 whitespace-nowrap font-medium text-[#2e4a21]">
-                    <span className="flex items-center gap-1">
-                      <FileSpreadsheet className="h-3.5 w-3.5 text-[#259e73]" />
-                      {user.reports_count ?? 0} Laporan
-                    </span>
+                  <TableCell className="px-6 py-4 whitespace-nowrap text-gray-700 text-sm font-normal">
+                    {user.reports_count ?? 0}
                   </TableCell>
-                  <TableCell className="px-5 py-4 whitespace-nowrap text-[#5d6f66]">
-                    <span className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3 text-[#5d6f66]" />
-                      <ClientDate date={user.created_at} format="date" />
-                    </span>
+                  <TableCell className="px-6 py-4 whitespace-nowrap text-gray-700 text-sm font-normal">
+                    <ClientDate date={user.created_at} format="date" />
                   </TableCell>
-                  <TableCell className="px-5 py-4 whitespace-nowrap text-right">
-                    <div className="flex items-center justify-end gap-1.5">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleOpenEditModal(user)}
-                        className="h-8 px-2.5 text-xs text-gray-600 hover:text-[#2e4a21] hover:bg-[#f5f8f6]"
-                        title="Edit Data Pengguna"
+                  <TableCell className="px-6 py-4 whitespace-nowrap text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-gray-700 hover:text-gray-900 hover:bg-gray-100 transition-colors cursor-pointer outline-none">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        align="end"
+                        className="w-44 p-1 rounded-xl shadow-lg border border-gray-100 bg-white"
                       >
-                        <Edit className="h-3.5 w-3.5" />
-                        <span className="hidden sm:inline ml-1">Edit</span>
-                      </Button>
-
-                      <Link to={`/admin/users/${user.id}`}>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 px-2.5 text-xs text-[#259e73] hover:bg-[#acebd4]/20"
-                          title="Lihat Detail Pengguna"
+                        <DropdownMenuItem
+                          className="cursor-pointer text-xs py-2"
+                          onClick={() => handleOpenEditModal(user)}
                         >
-                          <ExternalLink className="h-3.5 w-3.5" />
-                          <span className="hidden sm:inline ml-1">Detail</span>
-                        </Button>
-                      </Link>
-
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDeleteUser(user)}
-                        disabled={deleteUserMutation.isPending}
-                        className="h-8 w-8 text-red-600 hover:bg-red-50 hover:text-red-700 cursor-pointer"
-                        title="Hapus Akun Pengguna"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
+                          <Edit className="h-3.5 w-3.5 mr-2 text-gray-400" />
+                          <span>Edit Pengguna</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="cursor-pointer text-xs py-2"
+                          onClick={() => navigate(`/admin/users/${user.id}`)}
+                        >
+                          <ExternalLink className="h-3.5 w-3.5 mr-2 text-gray-400" />
+                          <span>Lihat Detail</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator className="my-1 bg-gray-100" />
+                        <DropdownMenuItem
+                          variant="destructive"
+                          className="cursor-pointer text-xs py-2 text-red-600 hover:text-red-700 focus:bg-red-50"
+                          onClick={() => handleDeleteUser(user)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5 mr-2 text-red-600" />
+                          <span>Hapus Akun</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))
@@ -456,20 +454,20 @@ export default function AdminUsersPage() {
         </Table>
 
         {/* Table Footer with Pagination Controls */}
-        <div className="px-6 py-3.5 bg-[#f5f8f6] border-t border-[#e2ebe6] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#5d6f66]">
+        <div className="px-6 py-4 bg-white border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-500">
           <div className="flex items-center gap-3">
             <span>
               Menampilkan {users.length} dari {totalUsers} pengguna
             </span>
-            <div className="flex items-center gap-1">
-              <span>Per baris:</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-gray-400">Per baris:</span>
               <select
                 value={perPage}
                 onChange={(e) => {
                   setPerPage(Number(e.target.value));
                   setPage(1);
                 }}
-                className="rounded-md border border-[#e2ebe6] bg-white px-2 py-0.5 text-xs text-[#2e4a21] focus:outline-none"
+                className="rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs text-gray-700 focus:outline-none focus:ring-1 focus:ring-gray-300"
               >
                 <option value={10}>10</option>
                 <option value={25}>25</option>
