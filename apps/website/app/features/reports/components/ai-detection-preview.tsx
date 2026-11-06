@@ -1,27 +1,16 @@
 import React from "react";
-import { UploadCloud, Camera, Sparkles, CheckCircle2 } from "lucide-react";
+import { UploadCloud, Camera, Sparkles } from "lucide-react";
 import { Spinner } from "~/components/ui/spinner";
 import { CategoryBadge } from "~/components/common/category-badge";
 import { formatConfidence } from "~/lib/utils";
 import type { WasteCategory } from "~/types/report.types";
 
-interface SamplePreset {
-  label: string;
-  category: WasteCategory;
-  confidence: number;
-  url: string;
-  title: string;
-  desc: string;
-}
-
 interface AiDetectionPreviewProps {
   imagePreview: string | null;
   onImageChange: (file: File) => void;
   isClassifying: boolean;
-  predictedCategory: WasteCategory;
-  confidence: number;
-  presets?: SamplePreset[];
-  onApplyPreset?: (preset: SamplePreset) => void;
+  predictedCategory?: WasteCategory | null;
+  confidence?: number;
 }
 
 export function AiDetectionPreview({
@@ -29,9 +18,7 @@ export function AiDetectionPreview({
   onImageChange,
   isClassifying,
   predictedCategory,
-  confidence,
-  presets = [],
-  onApplyPreset,
+  confidence = 0,
 }: AiDetectionPreviewProps) {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -95,52 +82,47 @@ export function AiDetectionPreview({
       />
 
       {/* AI Prediction Result Box */}
-      <div className="flex items-center justify-between rounded-xl bg-[#259e73]/10 p-3.5 border border-[#259e73]/20">
-        <div className="flex items-center gap-2.5">
-          <Sparkles className="h-4 w-4 text-[#259e73] shrink-0" />
-          <div>
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-[#5d6f66] block">
-              Hasil Deteksi AI
-            </span>
-            <div className="flex items-center gap-2 mt-0.5">
-              <CategoryBadge category={predictedCategory} size="sm" />
-              <span className="text-xs font-bold text-[#2e4a21]">
-                Akurasi: {formatConfidence(confidence)}
+      {imagePreview ? (
+        <div className="flex items-center justify-between rounded-xl bg-[#259e73]/10 p-3.5 border border-[#259e73]/20">
+          <div className="flex items-center gap-2.5">
+            <Sparkles className="h-4 w-4 text-[#259e73] shrink-0" />
+            <div>
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-[#5d6f66] block">
+                Hasil Deteksi AI
               </span>
+              <div className="flex items-center gap-2 mt-0.5">
+                {predictedCategory ? (
+                  <>
+                    <CategoryBadge category={predictedCategory} size="sm" />
+                    <span className="text-xs font-bold text-[#2e4a21]">
+                      Akurasi: {formatConfidence(confidence)}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-xs text-[#5d6f66]">
+                    {isClassifying ? "Menganalisis jenis sampah..." : "Foto siap dianalisis"}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
+
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="text-xs font-semibold text-[#259e73] hover:underline cursor-pointer"
+          >
+            Ganti Foto
+          </button>
         </div>
-
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          className="text-xs font-semibold text-[#259e73] hover:underline"
-        >
-          Ganti Foto
-        </button>
-      </div>
-
-      {/* Preset Tes Cepat */}
-      {presets.length > 0 && onApplyPreset && (
-        <div className="pt-2">
-          <span className="text-[11px] font-semibold text-[#5d6f66] block mb-2">
-            Uji Coba Contoh Cepat (One-Click Test):
+      ) : (
+        <div className="flex items-center gap-2.5 rounded-xl bg-[#f5f8f6] p-3.5 border border-[#e2ebe6] text-[#5d6f66]">
+          <Sparkles className="h-4 w-4 text-[#5d6f66] shrink-0" />
+          <span className="text-xs">
+            Unggah atau ambil foto sampah untuk analisis otomatis kategori oleh AI.
           </span>
-          <div className="grid grid-cols-3 gap-2">
-            {presets.map((preset, idx) => (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => onApplyPreset(preset)}
-                className="flex items-center justify-center rounded-lg border border-[#e2ebe6] bg-white py-1.5 px-2 text-xs font-medium text-[#2e4a21] hover:border-[#259e73] hover:bg-[#acebd4]/10 transition-colors truncate"
-              >
-                {preset.label}
-              </button>
-            ))}
-          </div>
         </div>
       )}
     </div>
   );
 }
-
