@@ -1,463 +1,399 @@
 import React, { useState } from "react";
 import { Link } from "react-router";
 import {
-  Clock,
-  CheckCircle2,
+  AlertCircle,
   ArrowRight,
+  CheckCircle2,
+  Clock,
+  FileSpreadsheet,
+  MapPin,
   PlusCircle,
-  RotateCcw,
+  RefreshCw,
   Search,
   Sparkles,
-  MapPin,
-  Layers,
-  Recycle,
-  Leaf,
-  FileText,
-  AlertTriangle,
-  XCircle,
-  FileSpreadsheet,
+  TrendingUp,
+  Truck,
 } from "lucide-react";
 import type { Route } from "./+types/user.dashboard";
 import { ClientDate } from "~/components/common/client-date";
 import { CategoryBadge } from "~/components/common/category-badge";
 import { StatusBadge } from "~/components/common/status-badge";
-import { EmptyState } from "~/components/common/empty-state";
 import { Button } from "~/components/ui/button";
 import { Spinner } from "~/components/ui/spinner";
 import { useUserDashboard } from "~/features/dashboard/hooks/use-dashboard";
-import { cn } from "~/lib/utils";
+import { getApiErrorMessage } from "~/lib/axios";
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "Dashboard Warga - Smart Waste Management" },
+    { title: "Dashboard Overview - Warga Smart Waste" },
     {
       name: "description",
       content:
-        "Ringkasan kontribusi pelaporan sampah, status penanganan dinas, dan analitik AI.",
+        "Ringkasan kontribusi pelaporan sampah, status verifikasi dinas, klasifikasi AI, dan armada kebersihan.",
     },
   ];
 }
 
 export default function UserDashboardPage() {
-  const { data: dashboard, isLoading, isFetching, refetch } = useUserDashboard();
-  const [searchQuery, setSearchQuery] = useState("");
-
-  if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] text-gray-500">
-        <Spinner className="size-8 text-[#107549] mb-3" />
-        <p className="text-sm font-medium">Memuat ringkasan laporan Anda...</p>
-      </div>
-    );
-  }
+  const { data: dashboard, isLoading, isError, error, refetch, isFetching } = useUserDashboard();
+  const [searchTableQuery, setSearchTableQuery] = useState("");
 
   const totalReports = dashboard?.total_reports ?? 0;
   const pendingReports = dashboard?.pending_reports ?? 0;
   const inProgressReports = dashboard?.in_progress_reports ?? 0;
   const completedReports = dashboard?.completed_reports ?? 0;
   const rejectedReports = dashboard?.rejected_reports ?? 0;
-  const recentReports = dashboard?.recent_reports ?? [];
 
-  // Category counts
-  const categoryStats = dashboard?.reports_by_category || {
-    plastic: 0,
-    organic: 0,
-    paper: 0,
-  };
-  const plasticCount = categoryStats.plastic;
-  const organicCount = categoryStats.organic;
-  const paperCount = categoryStats.paper;
+  const plasticCount = dashboard?.reports_by_category?.plastic ?? 0;
+  const organicCount = dashboard?.reports_by_category?.organic ?? 0;
+  const paperCount = dashboard?.reports_by_category?.paper ?? 0;
   const categoryTotal = plasticCount + organicCount + paperCount || totalReports;
 
-  const plasticPercent =
-    categoryTotal > 0 ? Math.round((plasticCount / categoryTotal) * 100) : 0;
-  const organicPercent =
-    categoryTotal > 0 ? Math.round((organicCount / categoryTotal) * 100) : 0;
-  const paperPercent =
-    categoryTotal > 0 ? Math.round((paperCount / categoryTotal) * 100) : 0;
+  const plasticPercent = categoryTotal > 0 ? Math.round((plasticCount / categoryTotal) * 100) : 0;
+  const organicPercent = categoryTotal > 0 ? Math.round((organicCount / categoryTotal) * 100) : 0;
+  const paperPercent = categoryTotal > 0 ? Math.round((paperCount / categoryTotal) * 100) : 0;
 
-  // Handling rates
-  const completionRate =
-    totalReports > 0 ? Math.round((completedReports / totalReports) * 100) : 0;
+  const completionRate = totalReports > 0 ? Math.round((completedReports / totalReports) * 100) : 0;
+  const pendingRate = totalReports > 0 ? Math.round((pendingReports / totalReports) * 100) : 0;
   const activeReportsCount = pendingReports + inProgressReports;
 
-  const filteredReports = recentReports.filter(
+  const recentReports = dashboard?.recent_reports ?? [];
+  const filteredRecentReports = recentReports.filter(
     (rep) =>
-      rep.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      String(rep.id).includes(searchQuery) ||
-      (rep.address && rep.address.toLowerCase().includes(searchQuery.toLowerCase()))
+      rep.title.toLowerCase().includes(searchTableQuery.toLowerCase()) ||
+      String(rep.id).includes(searchTableQuery) ||
+      (rep.address && rep.address.toLowerCase().includes(searchTableQuery.toLowerCase()))
   );
 
   return (
     <div className="space-y-6">
-      {/* Top Header: Overview title, status badge & actions */}
+      {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-bold tracking-tight text-[#181d1a]">
               Dashboard Warga
             </h1>
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-[#107549]/10 px-3 py-0.5 text-xs font-semibold text-[#107549]">
-              <Sparkles className="h-3.5 w-3.5" />
-              <span>Portal Warga Peduli Lingkungan</span>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-800 border border-emerald-200">
+              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+              Portal Warga Aktif
             </span>
           </div>
           <p className="text-xs text-gray-500 mt-1">
-            Ringkasan kontribusi pelaporan sampah, status verifikasi dinas, dan hasil analisis AI.
+            Ringkasan kontribusi pelaporan sampah Anda, hasil klasifikasi AI, dan status penanganan dinas.
           </p>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex items-center gap-2.5">
+        {/* Action Controls */}
+        <div className="flex items-center gap-2">
           <Button
             variant="outline"
             size="sm"
             onClick={() => refetch()}
             disabled={isFetching}
-            className="flex items-center gap-1.5 rounded-xl border-[#e5e9e7] bg-white px-3.5 py-2 text-xs font-semibold text-[#181d1a] shadow-xs hover:bg-[#f7f9f8] transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 text-xs font-semibold"
           >
-            <RotateCcw
-              className={cn("h-3.5 w-3.5 text-gray-500", isFetching && "animate-spin text-[#107549]")}
-            />
-            <span>Segarkan Data</span>
+            <RefreshCw className={`h-3.5 w-3.5 text-gray-500 ${isFetching ? "animate-spin text-[#107549]" : ""}`} />
+            <span>{isFetching ? "Menyegarkan..." : "Segarkan Data"}</span>
           </Button>
 
           <Link to="/user/reports/new">
-            <Button
-              size="sm"
-              className="bg-[#107549] hover:bg-[#0c5c36] text-white rounded-xl gap-1.5 shadow-xs font-semibold text-xs h-9 cursor-pointer"
-            >
-              <PlusCircle className="h-4 w-4" />
+            <Button size="sm" variant="primary" className="flex items-center gap-1.5 text-xs font-semibold">
+              <PlusCircle className="h-3.5 w-3.5" />
               <span>Lapor Sampah</span>
             </Button>
           </Link>
         </div>
       </div>
 
-      {/* Row 1: 4 Metric Cards */}
+      {/* Error Banner */}
+      {isError && (
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 flex items-center justify-between text-sm text-red-700">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-5 w-5 text-red-500 shrink-0" />
+            <span>Gagal memuat data dashboard: {getApiErrorMessage(error)}</span>
+          </div>
+          <Button size="sm" variant="outline" onClick={() => refetch()}>
+            Coba Lagi
+          </Button>
+        </div>
+      )}
+
+      {/* Row 1: 4 Main Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Card 1: Total Reports (Green Hero Card) */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0b5c36] via-[#107549] to-[#08482a] p-5 text-white shadow-sm flex flex-col justify-between min-h-[170px]">
+        {/* Card 1: Total Laporan (Emerald Hero Card) */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0b5c36] via-[#107549] to-[#08482a] p-5 text-white shadow-sm flex flex-col justify-between min-h-[160px]">
+          <div className="absolute -right-6 -bottom-6 h-28 w-28 rounded-full bg-white/5 blur-xl pointer-events-none" />
           <div>
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-emerald-100">
-                Total Kontribusi
-              </span>
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/15 backdrop-blur-xs text-white">
+              <span className="text-xs font-medium text-emerald-100">Total Pengaduan</span>
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/15 text-white backdrop-blur-xs">
                 <FileSpreadsheet className="h-4 w-4" />
               </div>
             </div>
             <div className="mt-3">
-              <span className="text-3xl font-extrabold tracking-tight text-white">
-                {totalReports}
-              </span>
-              <span className="ml-1.5 text-xs text-emerald-100">Laporan</span>
+              <div suppressHydrationWarning className="text-3xl font-extrabold tracking-tight">
+                {isLoading ? <Spinner className="size-6 text-white" /> : totalReports.toLocaleString("id-ID")}
+              </div>
+              <p className="text-[11px] text-emerald-100/80 mt-1">Seluruh laporan diajukan</p>
             </div>
           </div>
           <Link
             to="/user/reports"
-            className="mt-3 pt-2.5 border-t border-white/15 flex items-center justify-between text-[11px] font-medium text-emerald-100 hover:text-white transition-colors"
+            className="mt-3 pt-2.5 border-t border-white/15 flex items-center justify-between text-xs font-medium text-white/90 hover:text-white group"
           >
-            <span>Lihat semua laporan</span>
-            <ArrowRight className="h-3 w-3" />
+            <span>Riwayat Laporan</span>
+            <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
           </Link>
         </div>
 
-        {/* Card 2: Pending (Menunggu Validasi) */}
-        <div className="rounded-3xl border border-[#e5e9e7] bg-white p-5 shadow-xs flex flex-col justify-between min-h-[170px]">
+        {/* Card 2: Menunggu Verifikasi (Amber Warning) */}
+        <div className="rounded-2xl border border-amber-200/80 bg-white p-5 shadow-xs flex flex-col justify-between min-h-[160px]">
           <div>
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-gray-500">
-                Menunggu Verifikasi
-              </span>
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
+              <span className="text-xs font-semibold text-gray-500">Menunggu Verifikasi</span>
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-600 border border-amber-200">
                 <Clock className="h-4 w-4" />
               </div>
             </div>
             <div className="mt-3">
-              <span className="text-3xl font-extrabold tracking-tight text-[#181d1a]">
-                {pendingReports}
-              </span>
-              <span className="ml-1.5 text-xs text-gray-400">Menunggu</span>
+              <div suppressHydrationWarning className="text-3xl font-extrabold tracking-tight text-amber-600">
+                {isLoading ? <Spinner className="size-6 text-amber-600" /> : pendingReports.toLocaleString("id-ID")}
+              </div>
+              <p className="text-[11px] text-gray-400 mt-1">Antrean verifikasi petugas dinas</p>
             </div>
           </div>
           <Link
             to="/user/reports?status=pending"
-            className="mt-3 pt-2.5 border-t border-gray-100 flex items-center justify-between text-[11px] font-medium text-gray-500 hover:text-amber-700 transition-colors"
+            className="mt-3 pt-2.5 border-t border-gray-100 flex items-center justify-between text-xs font-medium text-amber-700 hover:text-amber-800 group"
           >
-            <span>Antrean verifikasi dinas</span>
-            <ArrowRight className="h-3 w-3" />
+            <span>Lihat antrean</span>
+            <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
           </Link>
         </div>
 
-        {/* Card 3: In Progress (Sedang Ditangani) */}
-        <div className="rounded-3xl border border-[#e5e9e7] bg-white p-5 shadow-xs flex flex-col justify-between min-h-[170px]">
+        {/* Card 3: Sedang Ditangani (Blue / Info) */}
+        <div className="rounded-2xl border border-blue-200/80 bg-white p-5 shadow-xs flex flex-col justify-between min-h-[160px]">
           <div>
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-gray-500">
-                Sedang Ditangani
-              </span>
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-                <Layers className="h-4 w-4" />
+              <span className="text-xs font-semibold text-gray-500">Sedang Ditangani</span>
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-200">
+                <Truck className="h-4 w-4" />
               </div>
             </div>
             <div className="mt-3">
-              <span className="text-3xl font-extrabold tracking-tight text-[#181d1a]">
-                {inProgressReports}
-              </span>
-              <span className="ml-1.5 text-xs text-gray-400">Lokasi</span>
+              <div suppressHydrationWarning className="text-3xl font-extrabold tracking-tight text-blue-600">
+                {isLoading ? <Spinner className="size-6 text-blue-600" /> : inProgressReports.toLocaleString("id-ID")}
+              </div>
+              <p className="text-[11px] text-gray-400 mt-1">Armada kebersihan di lapangan</p>
             </div>
           </div>
           <Link
             to="/user/reports?status=in_progress"
-            className="mt-3 pt-2.5 border-t border-gray-100 flex items-center justify-between text-[11px] font-medium text-gray-500 hover:text-blue-700 transition-colors"
+            className="mt-3 pt-2.5 border-t border-gray-100 flex items-center justify-between text-xs font-medium text-blue-700 hover:text-blue-800 group"
           >
-            <span>Proses petugas lapangan</span>
-            <ArrowRight className="h-3 w-3" />
+            <span>Pantau armada</span>
+            <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
           </Link>
         </div>
 
-        {/* Card 4: Completed (Tuntas) */}
-        <div className="rounded-3xl border border-[#e5e9e7] bg-white p-5 shadow-xs flex flex-col justify-between min-h-[170px]">
+        {/* Card 4: Selesai Ditangani (Emerald / Success) */}
+        <div className="rounded-2xl border border-emerald-200/80 bg-white p-5 shadow-xs flex flex-col justify-between min-h-[160px]">
           <div>
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-gray-500">
-                Tuntas / Selesai
-              </span>
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+              <span className="text-xs font-semibold text-gray-500">Selesai Ditangani</span>
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200">
                 <CheckCircle2 className="h-4 w-4" />
               </div>
             </div>
             <div className="mt-3">
-              <span className="text-3xl font-extrabold tracking-tight text-[#181d1a]">
-                {completedReports}
-              </span>
-              <span className="ml-1.5 text-xs text-gray-400">Titik Bersih</span>
+              <div suppressHydrationWarning className="text-3xl font-extrabold tracking-tight text-emerald-600">
+                {isLoading ? <Spinner className="size-6 text-emerald-600" /> : completedReports.toLocaleString("id-ID")}
+              </div>
+              <p className="text-[11px] text-gray-400 mt-1">Lokasi bersih & tuntas</p>
             </div>
           </div>
           <Link
             to="/user/reports?status=completed"
-            className="mt-3 pt-2.5 border-t border-gray-100 flex items-center justify-between text-[11px] font-medium text-gray-500 hover:text-emerald-700 transition-colors"
+            className="mt-3 pt-2.5 border-t border-gray-100 flex items-center justify-between text-xs font-medium text-emerald-700 hover:text-emerald-800 group"
           >
-            <span>Telah dibersihkan</span>
-            <ArrowRight className="h-3 w-3" />
+            <span>Lihat arsip tuntas</span>
+            <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
           </Link>
         </div>
       </div>
 
-      {/* Row 2: Middle Section (Kategori Sampah AI & Status Penanganan) */}
+      {/* Row 2: Analytics Breakdown (Category Distribution & Operational Summary) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        {/* Left Column (5 cols): Kategori Sampah Terdeteksi AI */}
-        <div className="lg:col-span-5 rounded-3xl border border-[#e5e9e7] bg-white p-6 shadow-xs flex flex-col justify-between">
+        {/* Left Column (7 cols): AI Category Distribution */}
+        <div className="lg:col-span-7 rounded-2xl border border-[#e5e9e7] bg-white p-6 shadow-xs flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-base font-bold text-[#181d1a]">
-                  Kategori Sampah AI
-                </h2>
-                <p className="text-[11px] text-gray-400 mt-0.5">
-                  Klasifikasi otomatis foto menggunakan MobileNetV2
-                </p>
-              </div>
-
-              <Link to="/user/reports/new">
-                <button className="flex items-center gap-1 rounded-full border border-gray-200 px-3 py-1 text-xs font-semibold text-[#107549] hover:bg-emerald-50 transition-colors cursor-pointer">
-                  <span>+ Lapor Baru</span>
-                </button>
-              </Link>
-            </div>
-
-            {/* 3 Categories Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-5">
-              {/* Plastik */}
-              <div className="rounded-2xl border border-blue-100 bg-blue-50/40 p-4 flex flex-col justify-between">
+            <div className="flex items-center justify-between pb-4 border-b border-gray-100">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#259e73]/10 text-[#259e73]">
+                  <Sparkles className="h-4 w-4" />
+                </div>
                 <div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-blue-900">Plastik</span>
-                    <div className="h-6 w-6 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center">
-                      <Recycle className="h-3.5 w-3.5" />
-                    </div>
-                  </div>
-                  <p className="mt-3 text-2xl font-extrabold text-blue-950 tracking-tight">
-                    {plasticCount}
-                  </p>
-                  <p className="text-[10px] text-blue-600 font-medium mt-0.5">
-                    {plasticPercent}% dari total
+                  <h2 className="text-sm font-bold text-[#181d1a]">
+                    Klasifikasi Kategori Sampah (AI Computer Vision)
+                  </h2>
+                  <p className="text-[11px] text-gray-400">
+                    Hasil deteksi otomatis model MobileNetV2 dari foto pengaduan Anda
                   </p>
                 </div>
+              </div>
+              <span className="text-xs font-mono font-bold text-[#107549] bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                Total {categoryTotal} Item
+              </span>
+            </div>
+
+            {/* 3 Category Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mt-5">
+              {/* Plastik */}
+              <div className="rounded-xl border border-sky-100 bg-sky-50/50 p-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-sky-900">Plastik</span>
+                  <span className="text-[11px] font-bold text-sky-700 bg-sky-100 px-2 py-0.5 rounded-full">
+                    {plasticPercent}%
+                  </span>
+                </div>
+                <p suppressHydrationWarning className="mt-3 text-2xl font-extrabold text-sky-950">
+                  {plasticCount.toLocaleString("id-ID")}
+                </p>
+                <div className="mt-2.5 h-1.5 w-full rounded-full bg-sky-200 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-sky-600 transition-all duration-500"
+                    style={{ width: `${plasticPercent}%` }}
+                  />
+                </div>
+                <p className="text-[10px] text-sky-700 mt-2">Daur ulang anorganik</p>
               </div>
 
               {/* Organik */}
-              <div className="rounded-2xl border border-emerald-100 bg-emerald-50/40 p-4 flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-emerald-900">Organik</span>
-                    <div className="h-6 w-6 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center">
-                      <Leaf className="h-3.5 w-3.5" />
-                    </div>
-                  </div>
-                  <p className="mt-3 text-2xl font-extrabold text-emerald-950 tracking-tight">
-                    {organicCount}
-                  </p>
-                  <p className="text-[10px] text-emerald-600 font-medium mt-0.5">
-                    {organicPercent}% dari total
-                  </p>
+              <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-emerald-900">Organik</span>
+                  <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                    {organicPercent}%
+                  </span>
                 </div>
+                <p suppressHydrationWarning className="mt-3 text-2xl font-extrabold text-emerald-950">
+                  {organicCount.toLocaleString("id-ID")}
+                </p>
+                <div className="mt-2.5 h-1.5 w-full rounded-full bg-emerald-200 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-[#107549] transition-all duration-500"
+                    style={{ width: `${organicPercent}%` }}
+                  />
+                </div>
+                <p className="text-[10px] text-emerald-700 mt-2">Komposting & pakan ternak</p>
               </div>
 
               {/* Kertas */}
-              <div className="rounded-2xl border border-amber-100 bg-amber-50/40 p-4 flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-amber-900">Kertas</span>
-                    <div className="h-6 w-6 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center">
-                      <FileText className="h-3.5 w-3.5" />
-                    </div>
-                  </div>
-                  <p className="mt-3 text-2xl font-extrabold text-amber-950 tracking-tight">
-                    {paperCount}
-                  </p>
-                  <p className="text-[10px] text-amber-600 font-medium mt-0.5">
-                    {paperPercent}% dari total
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-5 pt-3.5 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
-            <span className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-[#107549]" />
-              Model AI Terkalibrasi (3 Kelas Sampah)
-            </span>
-            <Link
-              to="/user/reports"
-              className="text-[#107549] font-medium hover:underline flex items-center gap-1"
-            >
-              <span>Riwayat</span>
-              <ArrowRight className="h-3 w-3" />
-            </Link>
-          </div>
-        </div>
-
-        {/* Right Column (7 cols): Progress Penanganan Laporan */}
-        <div className="lg:col-span-7 rounded-3xl border border-[#e5e9e7] bg-white p-6 shadow-xs flex flex-col justify-between">
-          <div>
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                  Efektivitas Penanganan
-                </p>
-                <div className="mt-1 flex items-baseline gap-2">
-                  <h2 className="text-3xl font-extrabold tracking-tight text-[#181d1a]">
-                    {completionRate}%
-                  </h2>
-                  <span className="text-xs font-medium text-emerald-600">
-                    Tingkat Penyelesaian Laporan
+              <div className="rounded-xl border border-amber-100 bg-amber-50/50 p-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-amber-900">Kertas</span>
+                  <span className="text-[11px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
+                    {paperPercent}%
                   </span>
                 </div>
-              </div>
-
-              <div className="text-right">
-                <span className="text-xs font-semibold text-gray-500 block">
-                  Laporan Aktif
-                </span>
-                <span className="text-lg font-bold text-amber-600">
-                  {activeReportsCount} Lokasi
-                </span>
-              </div>
-            </div>
-
-            {/* Visual Breakdown Bar */}
-            <div className="mt-6 space-y-2">
-              <div className="h-3.5 w-full rounded-full bg-gray-100 overflow-hidden flex">
-                {completedReports > 0 && (
-                  <div
-                    style={{ width: `${(completedReports / (totalReports || 1)) * 100}%` }}
-                    className="bg-emerald-500 transition-all duration-500"
-                    title={`Selesai: ${completedReports}`}
-                  />
-                )}
-                {inProgressReports > 0 && (
-                  <div
-                    style={{ width: `${(inProgressReports / (totalReports || 1)) * 100}%` }}
-                    className="bg-blue-500 transition-all duration-500"
-                    title={`Sedang Ditangani: ${inProgressReports}`}
-                  />
-                )}
-                {pendingReports > 0 && (
-                  <div
-                    style={{ width: `${(pendingReports / (totalReports || 1)) * 100}%` }}
-                    className="bg-amber-400 transition-all duration-500"
-                    title={`Menunggu: ${pendingReports}`}
-                  />
-                )}
-                {rejectedReports > 0 && (
-                  <div
-                    style={{ width: `${(rejectedReports / (totalReports || 1)) * 100}%` }}
-                    className="bg-rose-400 transition-all duration-500"
-                    title={`Ditolak: ${rejectedReports}`}
-                  />
-                )}
-              </div>
-
-              {/* Legend */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 text-xs">
-                <div className="flex items-center gap-2">
-                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
-                  <span className="text-gray-600">Selesai: {completedReports}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="h-2.5 w-2.5 rounded-full bg-blue-500" />
-                  <span className="text-gray-600">Proses: {inProgressReports}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
-                  <span className="text-gray-600">Menunggu: {pendingReports}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="h-2.5 w-2.5 rounded-full bg-rose-400" />
-                  <span className="text-gray-600">Ditolak: {rejectedReports}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Information Card */}
-            <div className="mt-5 rounded-2xl bg-[#f9faf9] border border-[#e5e9e7] p-4 text-xs text-gray-600 flex items-start gap-3">
-              <Sparkles className="h-4 w-4 text-[#107549] shrink-0 mt-0.5" />
-              <div>
-                <p className="font-semibold text-[#181d1a]">
-                  Kontribusi Anda Sangat Berarti
+                <p suppressHydrationWarning className="mt-3 text-2xl font-extrabold text-amber-950">
+                  {paperCount.toLocaleString("id-ID")}
                 </p>
-                <p className="mt-0.5 text-gray-500 leading-relaxed">
-                  Setiap laporan sampah yang Anda kirimkan langsung diteruskan ke dinas kebersihan terkait untuk ditindaklanjuti secara transparan dan terukur.
-                </p>
+                <div className="mt-2.5 h-1.5 w-full rounded-full bg-amber-200 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-amber-600 transition-all duration-500"
+                    style={{ width: `${paperPercent}%` }}
+                  />
+                </div>
+                <p className="text-[10px] text-amber-700 mt-2">Pabrik pulp & kardus</p>
               </div>
             </div>
           </div>
 
           <div className="mt-5 pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
-            <span>Dikelola Dinas Lingkungan Hidup & Kebersihan</span>
-            <Link
-              to="/user/reports?status=completed"
-              className="text-[#107549] font-medium hover:underline flex items-center gap-1"
-            >
-              <span>Lihat Laporan Tuntas</span>
+            <span>Akurasi estimasi AI: ~94-98%</span>
+            <Link to="/user/reports/new" className="text-[#107549] font-semibold hover:underline flex items-center gap-1">
+              <span>Buat laporan baru</span>
               <ArrowRight className="h-3 w-3" />
             </Link>
+          </div>
+        </div>
+
+        {/* Right Column (5 cols): Operational Performance */}
+        <div className="lg:col-span-5 rounded-2xl border border-[#e5e9e7] bg-white p-6 shadow-xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between pb-4 border-b border-gray-100">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gray-100 text-gray-700">
+                  <TrendingUp className="h-4 w-4" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-bold text-[#181d1a]">
+                    Efektivitas Penanganan
+                  </h2>
+                  <p className="text-[11px] text-gray-400">
+                    Rasio penyelesaian laporan terhadap total pengaduan Anda
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-5 space-y-4">
+              <div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-medium text-gray-600">Tingkat Penyelesaian (Completed)</span>
+                  <span className="font-bold text-emerald-700">{completionRate}%</span>
+                </div>
+                <div className="mt-1.5 h-2 w-full rounded-full bg-gray-100 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-emerald-600 transition-all duration-500"
+                    style={{ width: `${completionRate}%` }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-medium text-gray-600">Antrean Menunggu (Pending)</span>
+                  <span className="font-bold text-amber-600">{pendingRate}%</span>
+                </div>
+                <div className="mt-1.5 h-2 w-full rounded-full bg-gray-100 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-amber-500 transition-all duration-500"
+                    style={{ width: `${pendingRate}%` }}
+                  />
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-gray-100 grid grid-cols-2 gap-3 text-xs">
+                <div className="rounded-xl bg-gray-50 p-3 border border-gray-100">
+                  <p className="text-[11px] text-gray-400">Laporan Ditolak</p>
+                  <p className="text-lg font-bold text-gray-700 mt-0.5">{rejectedReports}</p>
+                </div>
+                <div className="rounded-xl bg-gray-50 p-3 border border-gray-100">
+                  <p className="text-[11px] text-gray-400">Laporan Aktif</p>
+                  <p className="text-lg font-bold text-amber-600 mt-0.5">{activeReportsCount}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 pt-3 border-t border-gray-100 text-[11px] text-gray-400">
+            Setiap laporan Anda diteruskan ke dinas kebersihan terkait untuk ditindaklanjuti secara terukur.
           </div>
         </div>
       </div>
 
       {/* Row 3: Recent Reports Table */}
-      <div className="rounded-3xl border border-[#e5e9e7] bg-white p-6 shadow-xs">
+      <div className="rounded-2xl border border-[#e5e9e7] bg-white p-6 shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-gray-100">
           <div>
             <h2 className="text-base font-bold text-[#181d1a]">
               Laporan Terbaru Anda
             </h2>
             <p className="text-xs text-gray-400 mt-0.5">
-              5 laporan sampah terakhir yang Anda ajukan ke sistem
+              Daftar 5 pengaduan sampah terbaru yang Anda ajukan ke sistem
             </p>
           </div>
 
@@ -467,117 +403,130 @@ export default function UserDashboardPage() {
               <input
                 type="text"
                 placeholder="Cari judul atau lokasi..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-48 sm:w-64 rounded-xl border border-[#e5e9e7] bg-[#f9faf9] pl-9 pr-3 py-1.5 text-xs text-[#181d1a] placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-[#107549] transition-all"
+                value={searchTableQuery}
+                onChange={(e) => setSearchTableQuery(e.target.value)}
+                className="w-48 sm:w-60 rounded-xl border border-[#e5e9e7] bg-white pl-8 pr-3 py-1.5 text-xs text-[#181d1a] placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-[#107549] transition-all"
               />
             </div>
 
             <Link to="/user/reports">
-              <Button
-                variant="outline"
-                size="sm"
-                className="rounded-xl border-[#e5e9e7] text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
-              >
-                <span>Semua Laporan</span>
-                <ArrowRight className="h-3.5 w-3.5 ml-1" />
+              <Button variant="outline" size="sm" className="text-xs font-semibold gap-1">
+                <span>Lihat Semua</span>
+                <ArrowRight className="h-3 w-3" />
               </Button>
             </Link>
           </div>
         </div>
 
-        {/* Reports Table */}
+        {/* Table Display */}
         <div className="overflow-x-auto mt-2">
-          {filteredReports.length > 0 ? (
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="text-gray-400 border-b border-gray-100 text-[11px] font-medium">
-                  <th className="py-3.5 px-4 font-medium">Laporan Sampah</th>
-                  <th className="py-3.5 px-4 font-medium">ID</th>
-                  <th className="py-3.5 px-4 font-medium">Kategori</th>
-                  <th className="py-3.5 px-4 font-medium">Tanggal Pengajuan</th>
-                  <th className="py-3.5 px-4 font-medium">Status Penanganan</th>
-                  <th className="py-3.5 px-4 text-right">Aksi</th>
+          <table className="w-full text-left">
+            <thead className="border-b border-gray-100 bg-white text-xs font-medium text-gray-400">
+              <tr>
+                <th className="px-6 py-4">ID Laporan</th>
+                <th className="px-6 py-4">Judul Laporan</th>
+                <th className="px-6 py-4">Kategori</th>
+                <th className="px-6 py-4">Waktu</th>
+                <th className="px-6 py-4">Lokasi</th>
+                <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4 text-right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100/80 bg-white text-sm">
+              {isLoading ? (
+                <tr>
+                  <td colSpan={7} className="text-center py-12 text-gray-400">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <Spinner className="size-5 text-gray-400" />
+                      <span className="text-xs">Memuat laporan terbaru...</span>
+                    </div>
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50 text-[#181d1a]">
-                {filteredReports.map((report) => (
-                  <tr
-                    key={report.id}
-                    className="hover:bg-[#f9faf9] transition-colors group cursor-pointer"
-                  >
-                    <td className="py-4 px-4 font-semibold">
+              ) : filteredRecentReports.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="text-center py-12 text-gray-400">
+                    <p className="text-sm font-semibold text-gray-600">Tidak ada laporan terbaru</p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      {searchTableQuery
+                        ? "Tidak ditemukan laporan yang cocok dengan kata kunci."
+                        : "Anda belum mengajukan laporan sampah ke sistem."}
+                    </p>
+                  </td>
+                </tr>
+              ) : (
+                filteredRecentReports.map((report) => (
+                  <tr key={report.id} className="hover:bg-gray-50/60 transition-colors">
+                    {/* ID */}
+                    <td className="px-6 py-4 font-mono text-xs font-bold text-[#107549]">
+                      #{report.id}
+                    </td>
+
+                    {/* Judul & Thumbnail */}
+                    <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <img
                           src={report.image_url}
                           alt={report.title}
-                          className="h-10 w-10 rounded-xl object-cover border border-[#e2ebe6] shrink-0"
+                          className="h-10 w-10 rounded-xl object-cover border border-gray-200 shrink-0"
                           loading="lazy"
                         />
-                        <div>
+                        <div className="min-w-0">
                           <Link
                             to={`/user/reports/${report.id}`}
-                            className="text-[#181d1a] font-semibold hover:text-[#107549] transition-colors block line-clamp-1"
+                            className="font-semibold text-xs text-[#181d1a] hover:text-[#107549] line-clamp-1 transition-colors block"
                           >
                             {report.title}
                           </Link>
-                          <span className="text-[11px] text-gray-400 font-normal flex items-center gap-1 mt-0.5">
-                            <MapPin className="h-3 w-3 text-[#107549] shrink-0" />
-                            <span className="line-clamp-1">
-                              {report.address || "Area Pelaporan"}
+                          {report.confidence_score ? (
+                            <span className="text-[10px] text-gray-400 font-medium">
+                              Akurasi AI: {Math.round(report.confidence_score * 100)}%
                             </span>
-                          </span>
+                          ) : null}
                         </div>
                       </div>
                     </td>
-                    <td className="py-4 px-4 font-mono text-gray-500 font-medium">
-                      #{report.id}
-                    </td>
-                    <td className="py-4 px-4">
+
+                    {/* Kategori */}
+                    <td className="px-6 py-4">
                       <CategoryBadge category={report.waste_category} size="sm" />
                     </td>
-                    <td className="py-4 px-4 text-gray-600">
+
+                    {/* Waktu */}
+                    <td className="px-6 py-4 text-xs text-gray-500 whitespace-nowrap">
                       <ClientDate date={report.created_at} format="datetime" />
                     </td>
-                    <td className="py-4 px-4 whitespace-nowrap">
+
+                    {/* Lokasi */}
+                    <td className="px-6 py-4 text-xs text-gray-500 max-w-[200px]">
+                      <span className="flex items-center gap-1 line-clamp-1">
+                        <MapPin className="h-3 w-3 text-[#107549] shrink-0" />
+                        <span className="truncate">{report.address || "Area Pelaporan"}</span>
+                      </span>
+                    </td>
+
+                    {/* Status */}
+                    <td className="px-6 py-4">
                       <StatusBadge status={report.status} variant="elegant" />
                     </td>
-                    <td className="py-4 px-4 text-right">
+
+                    {/* Aksi */}
+                    <td className="px-6 py-4 text-right">
                       <Link to={`/user/reports/${report.id}`}>
                         <Button
-                          variant="ghost"
+                          variant="outline"
                           size="sm"
-                          className="text-xs text-[#107549] hover:bg-emerald-50 rounded-lg px-2.5 h-8 font-medium cursor-pointer"
+                          className="text-xs font-semibold gap-1 rounded-xl h-8 px-2.5"
                         >
                           <span>Detail</span>
-                          <ArrowRight className="h-3 w-3 ml-1" />
+                          <ArrowRight className="h-3 w-3" />
                         </Button>
                       </Link>
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <div className="py-12">
-              <EmptyState
-                title="Belum ada laporan sampah yang diajukan"
-                description={
-                  searchQuery
-                    ? "Tidak ada laporan yang sesuai dengan kata kunci pencarian Anda."
-                    : "Anda belum pernah mengirimkan laporan sampah. Jadilah warga pelopor kebersihan dengan melaporkan tumpukan sampah di sekitar Anda."
-                }
-                action={
-                  <Link to="/user/reports/new">
-                    <Button variant="primary" size="sm" className="gap-1.5 font-semibold">
-                      <PlusCircle className="h-4 w-4" />
-                      <span>Buat Laporan Sampah Sekarang</span>
-                    </Button>
-                  </Link>
-                }
-              />
-            </div>
-          )}
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

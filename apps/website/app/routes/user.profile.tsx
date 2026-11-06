@@ -7,7 +7,6 @@ import {
   User,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -23,7 +22,7 @@ import type { Route } from "./+types/user.profile";
 
 export function meta({ }: Route.MetaArgs) {
   return [
-    { title: "Profil Pengguna - Smart Waste Management" },
+    { title: "Profil Pengguna - Warga Smart Waste" },
     {
       name: "description",
       content: "Kelola informasi profil warga dan pengaturan kata sandi akun pelapor sampah.",
@@ -89,21 +88,21 @@ export default function UserProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] text-[#5d6f66]">
-        <Spinner className="size-8 text-[#259e73] mb-3" />
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-gray-500">
+        <Spinner className="size-8 text-[#107549] mb-3" />
         <p className="text-sm font-medium">Memuat profil akun Anda...</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="space-y-6 max-w-4xl">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-[#2e4a21]">
+        <h1 className="text-2xl font-bold tracking-tight text-[#181d1a]">
           Profil Akun Warga
         </h1>
-        <p className="text-sm text-[#5d6f66] mt-0.5">
-          Perbarui informasi kontak dan keamanan akun pelapor Anda.
+        <p className="text-xs text-gray-500 mt-1">
+          Perbarui informasi data diri pelapor dan pengaturan keamanan kata sandi akun Anda.
         </p>
       </div>
 
@@ -116,26 +115,26 @@ export default function UserProfilePage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Personal Details Card */}
-        <div className="rounded-xl border border-[#e2ebe6] bg-[#fcfcfc] p-6 shadow-xs">
-          <div className="flex items-center gap-3 pb-4 mb-4 border-b border-[#f0f4f2]">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#acebd4] text-[#2e4a21] font-bold">
+        <div className="rounded-2xl border border-[#e5e9e7] bg-white p-6 shadow-xs">
+          <div className="flex items-center gap-3 pb-4 mb-4 border-b border-gray-100">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#107549]/10 text-[#107549]">
               <User className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-[#2e4a21]">Data Diri Pelapor</h3>
-              <p className="text-xs text-[#5d6f66]">Digunakan oleh dinas untuk verifikasi laporan</p>
+              <h3 className="text-sm font-bold text-[#181d1a]">Data Diri Pelapor</h3>
+              <p className="text-xs text-gray-400">Digunakan oleh dinas untuk koordinasi lapangan</p>
             </div>
           </div>
 
           {profileSuccess && (
-            <div className="mb-4 rounded-lg bg-[#259e73]/15 border border-[#259e73]/30 p-3 text-xs text-[#2e4a21] flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-[#259e73]" />
-              Informasi kontak Anda berhasil disimpan!
+            <div className="mb-4 rounded-xl bg-emerald-50 border border-emerald-200 p-3 text-xs text-emerald-800 flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+              Informasi data diri Anda berhasil disimpan!
             </div>
           )}
 
           {updateProfileMutation.error && (
-            <div className="mb-4 rounded-lg bg-red-50 border border-red-200 p-3 text-xs text-red-700">
+            <div className="mb-4 rounded-xl bg-red-50 border border-red-200 p-3 text-xs text-red-700">
               {getApiErrorMessage(updateProfileMutation.error)}
             </div>
           )}
@@ -149,6 +148,7 @@ export default function UserProfilePage() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
+                  className="text-xs h-10"
                 />
               </div>
             </div>
@@ -160,7 +160,7 @@ export default function UserProfilePage() {
                   id="citizenEmail"
                   value={userProfile?.email || ""}
                   disabled
-                  className="bg-[#f5f8f6] cursor-not-allowed text-[#889990]"
+                  className="bg-gray-50 cursor-not-allowed text-gray-500 text-xs h-10"
                 />
               </div>
             </div>
@@ -173,6 +173,7 @@ export default function UserProfilePage() {
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="0812-3456-7890"
+                  className="text-xs h-10"
                 />
               </div>
             </div>
@@ -180,7 +181,7 @@ export default function UserProfilePage() {
             <Button
               type="submit"
               variant="primary"
-              className="w-full"
+              className="w-full text-xs font-semibold h-10 mt-2"
               disabled={updateProfileMutation.isPending}
             >
               {updateProfileMutation.isPending ? (
@@ -191,7 +192,7 @@ export default function UserProfilePage() {
               ) : (
                 <>
                   <Save className="h-4 w-4 mr-1.5" />
-                  Simpan Kontak Profil
+                  Simpan Profil
                 </>
               )}
             </Button>
@@ -199,26 +200,26 @@ export default function UserProfilePage() {
         </div>
 
         {/* Change Password Card */}
-        <div className="rounded-xl border border-[#e2ebe6] bg-[#fcfcfc] p-6 shadow-xs">
-          <div className="flex items-center gap-3 pb-4 mb-4 border-b border-[#f0f4f2]">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#259e73]/15 text-[#259e73]">
+        <div className="rounded-2xl border border-[#e5e9e7] bg-white p-6 shadow-xs">
+          <div className="flex items-center gap-3 pb-4 mb-4 border-b border-gray-100">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#107549]/10 text-[#107549]">
               <Lock className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-[#2e4a21]">Ganti Kata Sandi</h3>
-              <p className="text-xs text-[#5d6f66]">Jaga keamanan akun pelaporan Anda</p>
+              <h3 className="text-sm font-bold text-[#181d1a]">Ganti Kata Sandi</h3>
+              <p className="text-xs text-gray-400">Jaga keamanan akun pelaporan Anda</p>
             </div>
           </div>
 
           {passwordSuccess && (
-            <div className="mb-4 rounded-lg bg-[#259e73]/15 border border-[#259e73]/30 p-3 text-xs text-[#2e4a21] flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-[#259e73]" />
+            <div className="mb-4 rounded-xl bg-emerald-50 border border-emerald-200 p-3 text-xs text-emerald-800 flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
               Kata sandi Anda berhasil diperbarui!
             </div>
           )}
 
           {updatePasswordMutation.error && (
-            <div className="mb-4 rounded-lg bg-red-50 border border-red-200 p-3 text-xs text-red-700">
+            <div className="mb-4 rounded-xl bg-red-50 border border-red-200 p-3 text-xs text-red-700">
               {getApiErrorMessage(updatePasswordMutation.error)}
             </div>
           )}
@@ -236,6 +237,7 @@ export default function UserProfilePage() {
                     setPasswordData({ ...passwordData, currentPassword: e.target.value })
                   }
                   required
+                  className="text-xs h-10"
                 />
               </div>
             </div>
@@ -252,30 +254,32 @@ export default function UserProfilePage() {
                     setPasswordData({ ...passwordData, newPassword: e.target.value })
                   }
                   required
+                  className="text-xs h-10"
                 />
               </div>
             </div>
 
             <div>
-              <Label htmlFor="userConfPass" required>Ulangi Kata Sandi Baru</Label>
+              <Label htmlFor="userConfirmPass" required>Konfirmasi Kata Sandi Baru</Label>
               <div className="mt-1.5">
                 <Input
-                  id="userConfPass"
+                  id="userConfirmPass"
                   type="password"
-                  placeholder="••••••••"
+                  placeholder="Ulangi kata sandi baru"
                   value={passwordData.confirmPassword}
                   onChange={(e) =>
                     setPasswordData({ ...passwordData, confirmPassword: e.target.value })
                   }
                   required
+                  className="text-xs h-10"
                 />
               </div>
             </div>
 
             <Button
               type="submit"
-              variant="forest"
-              className="w-full"
+              variant="primary"
+              className="w-full text-xs font-semibold h-10 mt-2"
               disabled={updatePasswordMutation.isPending}
             >
               {updatePasswordMutation.isPending ? (
@@ -295,11 +299,11 @@ export default function UserProfilePage() {
       </div>
 
       {/* Account Actions / Opsi Sesi */}
-      <div className="rounded-2xl border border-[#e2ebe6] bg-white p-6 shadow-xs space-y-4">
+      <div className="rounded-2xl border border-[#e5e9e7] bg-white p-6 shadow-xs space-y-4">
         <div>
-          <h2 className="text-base font-bold text-[#2e4a21]">Keluar Sesi Akun</h2>
-          <p className="text-xs text-[#5d6f66] mt-0.5">
-            Keluar dari sesi akun Smart Waste Anda.
+          <h2 className="text-base font-bold text-[#181d1a]">Keluar Sesi Akun</h2>
+          <p className="text-xs text-gray-400 mt-0.5">
+            Keluar dari sesi akun Smart Waste Anda pada perangkat ini.
           </p>
         </div>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-1">
@@ -308,7 +312,7 @@ export default function UserProfilePage() {
             variant="outline"
             onClick={() => logoutMutation.mutate()}
             disabled={logoutMutation.isPending}
-            className="border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 text-xs font-semibold cursor-pointer"
+            className="border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 text-xs font-semibold cursor-pointer h-9 px-4 rounded-xl"
           >
             <LogOut className="h-4 w-4 mr-1.5 text-red-500" />
             Keluar dari Akun
