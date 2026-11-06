@@ -22,47 +22,14 @@ import {
 } from "../hooks/use-reports";
 import { getApiErrorMessage } from "~/lib/axios";
 
-const samplePresets = [
-  {
-    label: "Botol Plastik",
-    category: "plastic" as WasteCategory,
-    confidence: 0.954,
-    url: "https://images.unsplash.com/photo-1605600659908-0ef719419d41?auto=format&fit=crop&w=800&q=80",
-    title: "Tumpukan Botol dan Gelas Plastik Berserakan",
-    desc: "Banyak sampah botol plastik air mineral dan sedotan di trotoar pinggir jalan raya.",
-  },
-  {
-    label: "Sayuran & Organik",
-    category: "organic" as WasteCategory,
-    confidence: 0.912,
-    url: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=800&q=80",
-    title: "Limbah Organik Kulit Buah dan Sayuran",
-    desc: "Sampah basah sisa makanan dan dedaunan membusuk di sudut lapangan RT.",
-  },
-  {
-    label: "Kardus & Kertas",
-    category: "paper" as WasteCategory,
-    confidence: 0.938,
-    url: "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=800&q=80",
-    title: "Tumpukan Kardus Bekas Paket",
-    desc: "Kardus kemasan barang dan kertas koran basah menumpuk di depan ruko kosong.",
-  },
-];
-
-async function urlToFile(url: string, filename: string): Promise<File> {
-  const res = await fetch(url);
-  const blob = await res.blob();
-  return new File([blob], filename, { type: blob.type || "image/jpeg" });
-}
-
 export function CreateReportForm() {
   const navigate = useNavigate();
   const { latitude, longitude, isLocating, error: gpsError, getLocation } = useGeolocation();
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(samplePresets[0].url);
-  const [predictedCategory, setPredictedCategory] = useState<WasteCategory>("plastic");
-  const [confidence, setConfidence] = useState(0.954);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [predictedCategory, setPredictedCategory] = useState<WasteCategory | null>(null);
+  const [confidence, setConfidence] = useState(0);
 
   const classifyMutation = useClassifyWasteImage();
   const createReportMutation = useCreateReport();
@@ -72,29 +39,23 @@ export function CreateReportForm() {
     handleSubmit,
     setValue,
     watch,
+    formState: { errors },
   } = useForm<CreateReportFormValues>({
     resolver: zodResolver(createReportSchema),
     defaultValues: {
-      title: samplePresets[0].title,
-      description: samplePresets[0].desc,
-      address: "Jl. Pemuda No. 45, Surabaya",
-      latitude: -7.2575,
-      longitude: 112.7521,
+      title: "",
+      description: "",
+      address: "",
+      latitude: latitude ?? -7.2575,
+      longitude: longitude ?? 112.7521,
       waste_category: "plastic",
-      image_url: samplePresets[0].url,
-      confidence_score: 0.954,
+      image_url: "",
+      confidence_score: 0,
     },
   });
 
   const currentAddress = watch("address");
   const currentCategory = watch("waste_category");
-
-  // Load default sample image file on mount for seamless demo/testing
-  useEffect(() => {
-    urlToFile(samplePresets[0].url, "sample-plastic.jpg")
-      .then((file) => setSelectedFile(file))
-      .catch(() => {});
-  }, []);
 
   // Sync GPS hook updates to react-hook-form
   useEffect(() => {
@@ -104,33 +65,18 @@ export function CreateReportForm() {
     }
   }, [latitude, longitude, setValue]);
 
-  const handleApplyPreset = (preset: typeof samplePresets[0]) => {
-    setImagePreview(preset.url);
-    setValue("title", preset.title);
-    setValue("description", preset.desc);
-    setValue("image_url", preset.url);
-    setPredictedCategory(preset.category);
-    setConfidence(preset.confidence);
-    setValue("waste_category", preset.category);
-    setValue("confidence_score", preset.confidence);
-
-    urlToFile(preset.url, `${preset.category}.jpg`)
-      .then((file) => setSelectedFile(file))
-      .catch(() => {});
-  };
-
   const handleImageUpload = (file: File) => {
     setSelectedFile(file);
     const objectUrl = URL.createObjectURL(file);
     setImagePreview(objectUrl);
-    setValue("image_url", objectUrl);
+    setValue("image_url", objectUrl, { shouldValidate: true });
 
     // Call real backend classification endpoint (FastAPI through Laravel)
     classifyMutation.mutate(file, {
       onSuccess: (result) => {
         setPredictedCategory(result.predicted_category);
         setConfidence(result.confidence_score);
-        setValue("waste_category", result.predicted_category);
+        setValue("waste_category", result.predicted_category, { shouldValidate: true });
         setValue("confidence_score", result.confidence_score);
       },
       onError: () => {
@@ -179,19 +125,25 @@ export function CreateReportForm() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Left Column: AI Detection & Photo */}
         <div className="space-y-6">
-          <AiDetectionPreview
-            imagePreview={imagePreview}
-            onImageChange={handleImageUpload}
-            isClassifying={classifyMutation.isPending}
-            predictedCategory={predictedCategory}
-            confidence={confidence}
-            presets={samplePresets}
-            onApplyPreset={handleApplyPreset}
-          />
+          <div>
+            <AiDetectionPreview
+              imagePreview={imagePreview}
+              onImageChange={handleImageUpload}
+              isClassifying={classifyMutation.isPending}
+              predictedCategory={predictedCategory}
+              confidence={confidence}
+            />
+            {errors.image_url && (
+              <p className="text-xs font-semibold text-red-600 mt-2 flex items-center gap-1.5">
+                <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                <span>{errors.image_url.message}</span>
+              </p>
+            )}
+          </div>
 
           <LocationPicker
             address={currentAddress}
-            onAddressChange={(val) => setValue("address", val)}
+            onAddressChange={(val) => setValue("address", val, { shouldValidate: true })}
             latitude={latitude ?? -7.2575}
             longitude={longitude ?? 112.7521}
             onCoordinatesChange={(lat, lng) => {
@@ -201,6 +153,7 @@ export function CreateReportForm() {
             onDetectGps={getLocation}
             isLocating={isLocating}
             gpsError={gpsError}
+            addressError={errors.address?.message}
           />
         </div>
 
