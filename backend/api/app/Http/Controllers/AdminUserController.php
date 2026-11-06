@@ -30,6 +30,10 @@ class AdminUserController extends Controller
             });
         }
 
+        if ($request->filled('role') && in_array($request->role, array_column(UserRole::cases(), 'value'), true)) {
+            $query->where('role', $request->role);
+        }
+
         $perPage = max(1, min((int) $request->input('per_page', 10), 100));
         $paginator = $query->latest('id')->paginate($perPage);
 

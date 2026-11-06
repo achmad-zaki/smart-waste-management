@@ -36,6 +36,18 @@ class AdminUserManagementTest extends TestCase
             ]);
     }
 
+    public function test_admin_can_filter_users_by_role(): void
+    {
+        $admin = User::factory()->admin()->create(['email' => 'admin_test@smartwaste.id']);
+        $user = User::factory()->user()->create(['email' => 'user_test@smartwaste.id']);
+
+        $response = $this->actingAs($admin)->getJson('/api/admin/users?role=user');
+
+        $response->assertStatus(200);
+        $data = $response->json('data');
+        $this->assertTrue(collect($data)->every(fn ($item) => $item['role'] === 'user'));
+    }
+
     public function test_admin_can_view_user_detail(): void
     {
         $admin = User::factory()->admin()->create();
